@@ -29,4 +29,5 @@ pip install -r requirements.txt
 For people developing on the environment, style-checking and static type-checking is performed using pre-commit hooks. Make sure you have `pre-commit` installed (separate command from dependency installation):
 ```
 pip install pre-commit
+pre-commit install
 ```
