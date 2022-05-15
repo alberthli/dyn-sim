@@ -1,7 +1,7 @@
 import numpy as np
-from dyn_sim.dyn_sys import CtrlAffineSystem
 from matplotlib.axes import Axes
 
+from dyn_sim.sys.dyn_sys import CtrlAffineSystem
 from dyn_sim.util.sim_utils import draw_circle
 
 # constants
@@ -245,8 +245,8 @@ class Quadrotor(CtrlAffineSystem):
         Ix, Iy, Iz = self._I
 
         # body -> world transformations
-        Rwb = self._Rwb(alpha)
-        Twb = self._Twb(alpha)
+        Rwb = self.Rwb(alpha)
+        Twb = self.Twb(alpha)
 
         # velocities
         do = Rwb @ do_b
@@ -370,9 +370,9 @@ class Quadrotor(CtrlAffineSystem):
         assert u.shape == (4,)
         assert d.shape == (6,)
 
-        fdyn = self.fdyn(s)
-        gdyn = self.gdyn(s)
-        wdyn = self.wdyn(d)
+        fdyn = self.fdyn(t, s)
+        gdyn = self.gdyn(t, s)
+        wdyn = self.wdyn(t, d)
         ds_gyro = np.zeros(12)
 
         # check whether gyroscopic effects are modeled. Note: this is

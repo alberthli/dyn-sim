@@ -63,7 +63,7 @@ class System(ABC):
 class CtrlAffineSystem(System, metaclass=ABCMeta):
     """Abstract class for control affine system."""
 
-    def __init__(self, n: int, m: int) -> None:
+    def __init__(self, n: int, m: int, is3d: bool) -> None:
         """Initialize a control affine system.
 
         The dynamics should have the form:
@@ -75,8 +75,10 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
             Dimension of state.
         m : int
             Dimension of control input.
+        is_3d : bool
+            Flag indicating whether the system is spatially 3D or not.
         """
-        super(CtrlAffineSystem, self).__init__(n, m)
+        super(CtrlAffineSystem, self).__init__(n, m, is3d)
 
     @abstractmethod
     def fdyn(self, t: float, x: np.ndarray) -> np.ndarray:
