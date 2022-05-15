@@ -59,10 +59,10 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
 		m : int
 			Dimension of control input.
 		"""
-		super(CtrlAffineSystem, self).__init__()
+		super(CtrlAffineSystem, self).__init__(n, m)
 
 	@abstractmethod
-	def f(self, t: float, x: np.ndarray) -> np.ndarray:
+	def fdyn(self, t: float, x: np.ndarray) -> np.ndarray:
 		"""Drift of the system.
 
 		Parameters
@@ -80,7 +80,7 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
 		pass
 
 	@abstractmethod
-	def g(self, t: float, x: np.ndarray) -> np.ndarray:
+	def gdyn(self, t: float, x: np.ndarray) -> np.ndarray:
 		"""Actuation matrix.
 
 		Parameters
