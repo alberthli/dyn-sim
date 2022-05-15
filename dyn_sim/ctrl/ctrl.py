@@ -14,10 +14,11 @@ class Controller(ABC):
         Parameters
         ----------
         sys : System
-                Dynamical system to be controlled.
+            Dynamical system to be controlled.
         """
         super(Controller, self).__init__()
 
+        self._sys = sys
         self._n = sys._n
         self._m = sys._m
 
