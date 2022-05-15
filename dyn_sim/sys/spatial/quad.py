@@ -89,7 +89,8 @@ class Quadrotor(CtrlAffineSystem):
         if Jtp is not None:
             assert Jtp > 0.0
 
-        super(Quadrotor, self).__init__(12, 4)
+        # 12 states, 4 inputs, is a spatially 3D system
+        super(Quadrotor, self).__init__(12, 4, True)
         self._mass = mass
         self._I = I
         self._kf = kf
