@@ -1,6 +1,8 @@
 import numpy as np
+from dyn_sim.dyn_sys import CtrlAffineSystem
+from matplotlib.axes import Axes
 
-from dyn_sim.sys import CtrlAffineSystem
+from dyn_sim.util.sim_utils import draw_circle
 
 # constants
 g = 9.80665  # gravitational acceleration
@@ -216,157 +218,6 @@ class Quadrotor(CtrlAffineSystem):
 
         return T
 
-    def A(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
-        """Linearized autonomous dynamics.
-
-        Parameters
-        ----------
-        s : np.ndarray, shape=(12,)
-            State.
-        u : np.ndarray, shape=(4,)
-            Virtual input of the quadrotor. Unused, included for API compliance.
-
-        Returns
-        -------
-        _A : np.ndarray, shape=(12, 12)
-            Linearized autonomous dynamics about s.
-        """
-        assert s.shape == (12,)
-
-        Ix, Iy, Iz = self._I
-
-        phi, theta, psi = s[3:6]
-        u, v, w = s[6:9]
-        p, q, r = s[9:12]
-
-        cphi = np.cos(phi)
-        cth = np.cos(theta)
-        cpsi = np.cos(psi)
-        sphi = np.sin(phi)
-        sth = np.sin(theta)
-        spsi = np.sin(psi)
-        tth = np.tan(theta)
-
-        _A = np.zeros((12, 12))
-
-        _A[0, 3:9] = np.array(
-            [
-                v * (sphi * spsi + cphi * cpsi * sth)
-                + w * (cphi * spsi - cpsi * sphi * sth),
-                w * cphi * cpsi * cth - u * cpsi * sth + v * cpsi * cth * sphi,
-                w * (cpsi * sphi - cphi * spsi * sth)
-                - v * (cphi * cpsi + sphi * spsi * sth)
-                - u * cth * spsi,
-                cpsi * cth,
-                cpsi * sphi * sth - cphi * spsi,
-                sphi * spsi + cphi * cpsi * sth,
-            ]
-        )
-        _A[1, 3:9] = np.array(
-            [
-                -v * (cpsi * sphi - cphi * spsi * sth)
-                - w * (cphi * cpsi + sphi * spsi * sth),
-                w * cphi * cth * spsi - u * spsi * sth + v * cth * sphi * spsi,
-                w * (sphi * spsi + cphi * cpsi * sth)
-                - v * (cphi * spsi - cpsi * sphi * sth)
-                + u * cpsi * cth,
-                cth * spsi,
-                cphi * cpsi + sphi * spsi * sth,
-                cphi * spsi * sth - cpsi * sphi,
-            ]
-        )
-        _A[2, 3:9] = np.array(
-            [
-                v * cphi * cth - w * cth * sphi,
-                -u * cth - w * cphi * sth - v * sphi * sth,
-                0.0,
-                -sth,
-                cth * sphi,
-                cphi * cth,
-            ]
-        )
-        _A[3, 3:5] = np.array(
-            [
-                q * cphi * tth - r * sphi * tth,
-                r * cphi * (tth**2.0 + 1.0) + q * sphi * (tth**2.0 + 1.0),
-            ]
-        )
-        _A[3, 9:12] = np.array([1.0, sphi * tth, cphi * tth])
-        _A[4, 3] = -r * cphi - q * sphi
-        _A[4, 10:12] = np.array([cphi, -sphi])
-        _A[5, 3:5] = np.array(
-            [
-                (q * cphi) / cth - (r * sphi) / cth,
-                (r * cphi * sth) / cth**2 + (q * sphi * sth) / cth**2,
-            ]
-        )
-        _A[5, 10:12] = np.array([sphi / cth, cphi / cth])
-        _A[6, 4] = g * cth
-        _A[6, 7:12] = np.array([r, -q, 0.0, -w, v])
-        _A[7, 3:12] = np.array(
-            [-g * cphi * cth, g * sphi * sth, 0.0, -r, 0.0, p, w, 0.0, -u]
-        )
-        _A[8, 3:12] = np.array(
-            [g * cth * sphi, g * cphi * sth, 0.0, q, -p, 0.0, -v, u, 0.0]
-        )
-        _A[9, 10:12] = np.array([(r * (Iy - Iz)) / Ix, (q * (Iy - Iz)) / Ix])
-        _A[10, 9:12] = np.array([-(r * (Ix - Iz)) / Iy, 0.0, -(p * (Ix - Iz)) / Iy])
-        _A[11, 9:11] = np.array([(q * (Ix - Iy)) / Iz, (p * (Ix - Iy)) / Iz])
-
-        return _A
-
-    def B(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
-        """Linearized control dynamics.
-
-        Parameters
-        ----------
-        s : np.ndarray, shape=(12,)
-            State. Unused, included for API compliance.
-        u : np.ndarray, shape=(4,)
-            Virtual input of the quadrotor. Unused, included for API compliance.
-
-        Returns
-        -------
-        _B : np.ndarray, shape=(12, 12)
-            Linearized control dynamics about s.
-        """
-        m = self._mass
-        Ix, Iy, Iz = self._I
-        _B = np.zeros((12, 4))
-
-        _B[8, 0] = 1.0 / m
-        _B[9, 1] = 1.0 / Ix
-        _B[10, 2] = 1.0 / Iy
-        _B[11, 3] = 1.0 / Iz
-
-        return _B
-
-    def D(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
-        """Linearized disturbance dynamics in BODY frame.
-
-        Parameters
-        ----------
-        s : np.ndarray, shape=(12,)
-            State. Unused, included for API compliance.
-        u : np.ndarray, shape=(4,)
-            Virtual input of the quadrotor. Unused, included for API compliance.
-
-        Returns
-        -------
-        _D : np.ndarray, shape=(12, 6)
-            Linearized disturbance dynamics about s.
-        """
-        m = self._mass
-        Ix, Iy, Iz = self._I
-        _D = np.zeros((12, 6))
-
-        _D[6:9, 0:3] = np.eye(3) / m
-        _D[9, 3] = 1.0 / Ix
-        _D[10, 4] = 1.0 / Iy
-        _D[11, 5] = 1.0 / Iz
-
-        return _D
-
     def fdyn(self, t: float, s: np.ndarray) -> np.ndarray:
         """Quadrotor autonomous dynamics.
 
@@ -545,3 +396,172 @@ class Quadrotor(CtrlAffineSystem):
 
         ds = fdyn + gdyn @ u + wdyn + ds_gyro
         return ds
+
+    def A(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
+        """Linearized autonomous dynamics about (s, u).
+
+        Parameters
+        ----------
+        s : np.ndarray, shape=(12,)
+            State.
+        u : np.ndarray, shape=(4,)
+            Virtual input of the quadrotor. Unused, included for API compliance.
+
+        Returns
+        -------
+        _A : np.ndarray, shape=(12, 12)
+            Linearized autonomous dynamics about s.
+        """
+        assert s.shape == (12,)
+
+        Ix, Iy, Iz = self._I
+
+        phi, theta, psi = s[3:6]
+        u, v, w = s[6:9]
+        p, q, r = s[9:12]
+
+        cphi = np.cos(phi)
+        cth = np.cos(theta)
+        cpsi = np.cos(psi)
+        sphi = np.sin(phi)
+        sth = np.sin(theta)
+        spsi = np.sin(psi)
+        tth = np.tan(theta)
+
+        _A = np.zeros((12, 12))
+
+        _A[0, 3:9] = np.array(
+            [
+                v * (sphi * spsi + cphi * cpsi * sth)
+                + w * (cphi * spsi - cpsi * sphi * sth),
+                w * cphi * cpsi * cth - u * cpsi * sth + v * cpsi * cth * sphi,
+                w * (cpsi * sphi - cphi * spsi * sth)
+                - v * (cphi * cpsi + sphi * spsi * sth)
+                - u * cth * spsi,
+                cpsi * cth,
+                cpsi * sphi * sth - cphi * spsi,
+                sphi * spsi + cphi * cpsi * sth,
+            ]
+        )
+        _A[1, 3:9] = np.array(
+            [
+                -v * (cpsi * sphi - cphi * spsi * sth)
+                - w * (cphi * cpsi + sphi * spsi * sth),
+                w * cphi * cth * spsi - u * spsi * sth + v * cth * sphi * spsi,
+                w * (sphi * spsi + cphi * cpsi * sth)
+                - v * (cphi * spsi - cpsi * sphi * sth)
+                + u * cpsi * cth,
+                cth * spsi,
+                cphi * cpsi + sphi * spsi * sth,
+                cphi * spsi * sth - cpsi * sphi,
+            ]
+        )
+        _A[2, 3:9] = np.array(
+            [
+                v * cphi * cth - w * cth * sphi,
+                -u * cth - w * cphi * sth - v * sphi * sth,
+                0.0,
+                -sth,
+                cth * sphi,
+                cphi * cth,
+            ]
+        )
+        _A[3, 3:5] = np.array(
+            [
+                q * cphi * tth - r * sphi * tth,
+                r * cphi * (tth**2.0 + 1.0) + q * sphi * (tth**2.0 + 1.0),
+            ]
+        )
+        _A[3, 9:12] = np.array([1.0, sphi * tth, cphi * tth])
+        _A[4, 3] = -r * cphi - q * sphi
+        _A[4, 10:12] = np.array([cphi, -sphi])
+        _A[5, 3:5] = np.array(
+            [
+                (q * cphi) / cth - (r * sphi) / cth,
+                (r * cphi * sth) / cth**2 + (q * sphi * sth) / cth**2,
+            ]
+        )
+        _A[5, 10:12] = np.array([sphi / cth, cphi / cth])
+        _A[6, 4] = g * cth
+        _A[6, 7:12] = np.array([r, -q, 0.0, -w, v])
+        _A[7, 3:12] = np.array(
+            [-g * cphi * cth, g * sphi * sth, 0.0, -r, 0.0, p, w, 0.0, -u]
+        )
+        _A[8, 3:12] = np.array(
+            [g * cth * sphi, g * cphi * sth, 0.0, q, -p, 0.0, -v, u, 0.0]
+        )
+        _A[9, 10:12] = np.array([(r * (Iy - Iz)) / Ix, (q * (Iy - Iz)) / Ix])
+        _A[10, 9:12] = np.array([-(r * (Ix - Iz)) / Iy, 0.0, -(p * (Ix - Iz)) / Iy])
+        _A[11, 9:11] = np.array([(q * (Ix - Iy)) / Iz, (p * (Ix - Iy)) / Iz])
+
+        return _A
+
+    def B(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
+        """Linearized control dynamics about (s, u).
+
+        Parameters
+        ----------
+        s : np.ndarray, shape=(12,)
+            State. Unused, included for API compliance.
+        u : np.ndarray, shape=(4,)
+            Virtual input of the quadrotor. Unused, included for API compliance.
+
+        Returns
+        -------
+        _B : np.ndarray, shape=(12, 12)
+            Linearized control dynamics about s.
+        """
+        m = self._mass
+        Ix, Iy, Iz = self._I
+        _B = np.zeros((12, 4))
+
+        _B[8, 0] = 1.0 / m
+        _B[9, 1] = 1.0 / Ix
+        _B[10, 2] = 1.0 / Iy
+        _B[11, 3] = 1.0 / Iz
+
+        return _B
+
+    def draw(self, ax: Axes, s: np.ndarray) -> None:
+        """Draws the quadrotor on specified Axes.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object on which to draw the quadrotor.
+        s : np.ndarray, shape=(12,)
+            Current state of the quadrotor.
+        """
+        assert ax.name == "3d"
+        assert s.shape == (12,)
+
+        # quadrotor plotting params
+        l = self._l
+        o = s[0:3]  # x, y, z
+        alpha = s[3:6]  # phi, theta, psi
+        Rwb = self.Rwb(alpha)
+
+        # rotor base locations on frame in inertial frame
+        r1 = o + Rwb @ np.array([l, 0.0, 0.0])
+        r2 = o + Rwb @ np.array([0.0, -l, 0.0])
+        r3 = o + Rwb @ np.array([-l, 0.0, 0.0])
+        r4 = o + Rwb @ np.array([0.0, l, 0.0])
+
+        # rotor vertical offsets
+        ro = Rwb @ np.array([0.0, 0.0, l / 10.0])
+        r1o = r1 + ro
+        r2o = r2 + ro
+        r3o = r3 + ro
+        r4o = r4 + ro
+
+        # drawing quadrotor body and rotors
+        ax.plot([r2[0], r4[0]], [r2[1], r4[1]], [r2[2], r4[2]], "k-")
+        ax.plot([r1[0], r3[0]], [r1[1], r3[1]], [r1[2], r3[2]], "k-")
+        ax.plot([r1[0], r1o[0]], [r1[1], r1o[1]], [r1[2], r1o[2]], "k-")
+        ax.plot([r2[0], r2o[0]], [r2[1], r2o[1]], [r2[2], r2o[2]], "k-")
+        ax.plot([r3[0], r3o[0]], [r3[1], r3o[1]], [r3[2], r3o[2]], "k-")
+        ax.plot([r4[0], r4o[0]], [r4[1], r4o[1]], [r4[2], r4o[2]], "k-")
+        draw_circle(ax, r1o, l / 2.0, ro, color="green")
+        draw_circle(ax, r2o, l / 2.0, ro)
+        draw_circle(ax, r3o, l / 2.0, ro)
+        draw_circle(ax, r4o, l / 2.0, ro)
