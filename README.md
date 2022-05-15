@@ -4,9 +4,17 @@
 This repository is a catch-all simulation environment for studying controllers (which may have bandwidth limitations) for dynamical systems.
 ### File Structure
 * `dyn_sim` - core code
-	* `ctrl` - implemented controllers
+	* `ctrl` - implemented controllers with subfolders corresponding to each system
+		* `quad`
+			* Inner/Outer Loop PD Controller
+			* [REFACTORING] Safe Multirate Controller
+		* [WIP] `segway`
 	* `sim` - simulator code
-	* `sys` - implemented dynamical systems
+	* `dyn_sys` - implemented dynamical systems
+		* `planar` - systems that are visualized in the plane
+			* [WIP] segway
+		* `spatial` - systems that are visualized in Euclidean space
+			* quad
 	* `util` - common utility functions across codebase
 * `scripts` - scripts for running simulations
 
