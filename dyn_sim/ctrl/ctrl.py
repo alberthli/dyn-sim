@@ -41,3 +41,21 @@ class Controller(ABC):
 
     def reset(self) -> None:
         """Resets controller internals. Used for controllers with memory."""
+
+
+class BWLC(Controller):
+    """Abstract class for bandwidth-limited controllers (BWLCs)."""
+
+    def __init__(self, sys: System, wc: float) -> None:
+        """Initialize a BWLC.
+
+        Parameters
+        ----------
+        sys : System
+            Dynamical system to be controlled.
+        wc : float
+            The control frequency (Hz).
+        """
+        assert wc > 0
+        super(BWLC, self).__init__()
+        self._wc = wc
