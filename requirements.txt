@@ -3,6 +3,7 @@ certifi==2021.10.8
 cycler==0.11.0
 flake8==3.9.2
 flake8-docstrings==1.6.0
+gurobipy==9.5.0
 isort==5.10.1
 kiwisolver==1.4.2
 matplotlib==3.5.2
