@@ -1,6 +1,5 @@
 import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 sys.path.append("..")
@@ -38,35 +37,39 @@ if __name__ == "__main__":
     x0 = np.zeros(12)  # initial state
     sim_length = 30.0  # simulation time
     n_frames = int(10 * sim_length + 1)  # number of frames
-    # fps = 20.0  # animation fps
     tsim = np.linspace(0, sim_length, n_frames)  # query times
     t_sol, x_sol = simulator.simulate(x0, tsim)
 
+    # animating the solution
+    fps = 20.0  # animation fps
+    xyz_lims = ((-2, 2), (-2, 2), (-2, 2))
+    simulator.animate(t_sol, x_sol, xyz_lims, fps=fps)
+
+    # STATIC PLOTS #
+
     # plotting positional results
-    o = x_sol[0:3, :]
-    alpha = x_sol[3:6, :]
+    # o = x_sol[0:3, :]
+    # alpha = x_sol[3:6, :]
 
-    fig, axs = plt.subplots(2, 1)
-    fig.tight_layout(pad=3.0)
+    # fig, axs = plt.subplots(2, 1)
+    # fig.tight_layout(pad=3.0)
 
-    # positions
-    axs[0].plot(t_sol, o[0, :].T, color="orange")
-    axs[0].plot(t_sol, o[1, :].T, color="green")
-    axs[0].plot(t_sol, o[2, :].T, color="blue")
-    axs[0].legend(["x", "y", "z"], loc="lower left", ncol=3)
-    axs[0].set_title("Quadrotor Position")
-    axs[0].set_xlabel("time")
-    axs[0].set_ylabel("position")
-    axs[0].set_ylim([-2, 2])
-    axs[0].set_xlim([t_sol[0], t_sol[-1]])
+    # # positions
+    # axs[0].plot(t_sol, o[0, :].T, color="orange")
+    # axs[0].plot(t_sol, o[1, :].T, color="green")
+    # axs[0].plot(t_sol, o[2, :].T, color="blue")
+    # axs[0].legend(["x", "y", "z"], loc="lower left", ncol=3)
+    # axs[0].set_title("Quadrotor Position")
+    # axs[0].set_xlabel("time")
+    # axs[0].set_ylabel("position")
+    # axs[0].set_ylim([-2, 2])
+    # axs[0].set_xlim([t_sol[0], t_sol[-1]])
 
-    # angles
-    axs[1].plot(t_sol, alpha[0, :].T, color="orange")
-    axs[1].plot(t_sol, alpha[1, :].T, color="green")
-    axs[1].legend(["roll", "pitch"], loc="lower left", ncol=2)
-    axs[1].set_title("Quadrotor Roll and Pitch")
-    axs[1].set_xlabel("time")
-    axs[1].set_ylabel("angle")
-    axs[1].set_xlim([t_sol[0], t_sol[-1]])
-
-    plt.show()  # TODO: fix this also showing the simulator when unwanted
+    # # angles
+    # axs[1].plot(t_sol, alpha[0, :].T, color="orange")
+    # axs[1].plot(t_sol, alpha[1, :].T, color="green")
+    # axs[1].legend(["roll", "pitch"], loc="lower left", ncol=2)
+    # axs[1].set_title("Quadrotor Roll and Pitch")
+    # axs[1].set_xlabel("time")
+    # axs[1].set_ylabel("angle")
+    # axs[1].set_xlim([t_sol[0], t_sol[-1]])

@@ -1,5 +1,8 @@
-from typing import Callable
+from typing import Callable, Optional, Tuple
 
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+import mpl_toolkits.mplot3d.axes3d as p3
 import numpy as np
 from scipy.integrate import solve_ivp
 
@@ -26,32 +29,14 @@ class SimulationEnvironment:
         self._fig = None
         self._ax = None
 
-        # [TODO] port this functionality into viz functions
-        # self._fig = plt.figure()
-        # self._ax = p3.Axes3D(self._fig)
-        # self._ax.set_proj_type("ortho")
-        # self._ax.grid(False)
-        # self._ax.set_xticks([])
-        # self._ax.set_yticks([])
-        # self._ax.set_zticks([])
-        # self._ax.set_xlim3d(xlim)
-        # self._ax.set_ylim3d(ylim)
-        # self._ax.set_zlim3d(zlim)
-
-    def _clear_frame(self) -> None:
-        """Clear the environment frame."""
-        if self._ax is not None:
-            for artist in self._ax.lines + self._ax.collections:
-                artist.remove()
-
     def simulate(
         self,
         x0: np.ndarray,
         tsim: np.ndarray,
-        dfunc: Callable[[float, np.ndarray], np.ndarray] = None,
+        dfunc: Optional[Callable[[float, np.ndarray], np.ndarray]] = None,
         max_step: float = 0.01,
     ) -> np.ndarray:
-        """Simulate a quadrotor run.
+        """Simulate the system.
 
         Parameters
         ----------
@@ -59,7 +44,7 @@ class SimulationEnvironment:
             Initial state.
         tsim : np.ndarray, shape=(T,)
             Simulation query points.
-        dfunc : Callable[np.ndarray, np.ndarray]
+        dfunc : Optional[Callable[np.ndarray, np.ndarray]]
             Disturbance function. Takes in state and time and returns a
             simulated disturbance.
         max_step : float, default=0.01
@@ -82,7 +67,7 @@ class SimulationEnvironment:
 
         # disturbance function
         if dfunc is not None:
-            dyn = lambda t, x: sys.dyn(t, x, ctrl(t, x), dfunc(t, x))
+            dyn = lambda t, x: sys.dyn(t, x, ctrl(t, x)) + dfunc(t, x)
         else:
             dyn = lambda t, x: sys.dyn(t, x, ctrl(t, x))
 
@@ -94,6 +79,65 @@ class SimulationEnvironment:
         self._ctrler.reset()
 
         return t_sol, x_sol
+
+    def animate(
+        self,
+        t_sol: np.ndarray,
+        x_sol: np.ndarray,
+        lims: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]],
+        fps: float = 10.0,
+        anim_name: str = None,
+    ) -> None:
+        """Animate a simulated result.
+
+        Parameters
+        ----------
+        t_sol : np.ndarray, shape=(T,)
+            Time values associated with state solution.
+        x_sol : np.ndarray, shape=(n, T)
+            Solution trajectories at the query times.
+        lims : Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]]
+            A tuple of the xlim, ylim, zlim for the plot.
+        fps : float, default=10.0
+            Animation frames per second.
+        anim_name : str, default=None
+            Name for animation file. If not None, saves an mp4. Else, doesn't save.
+        """
+        xlim, ylim, zlim = lims
+
+        self._fig = plt.figure()
+        self._ax = p3.Axes3D(self._fig)
+        self._ax.set_proj_type("ortho")
+        self._ax.grid(False)
+        self._ax.set_xticks([])
+        self._ax.set_yticks([])
+        self._ax.set_zticks([])
+        self._ax.set_xlim3d(xlim)
+        self._ax.set_ylim3d(ylim)
+        self._ax.set_zlim3d(zlim)
+
+        def _clear_frame() -> None:
+            """Clear the environment frame."""
+            if self._ax is not None:
+                for artist in self._ax.lines + self._ax.collections:
+                    artist.remove()
+
+        def _anim_sys(i):
+            """Animate the system on the frame."""
+            _clear_frame()
+            self._sys.draw(self._ax, x_sol[:, i])
+
+        anim = animation.FuncAnimation(
+            self._fig, _anim_sys, interval=20.0, frames=len(t_sol)
+        )
+
+        if anim_name is not None:
+            Writer = animation.writers["ffmpeg"]
+            writer = Writer(fps=fps, bitrate=1800)
+            anim.save("{}.mp4".format(anim_name), writer=writer)
+
+        plt.show()
+        _clear_frame()
 
     # def simulate(
     #     self,
