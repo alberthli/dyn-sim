@@ -38,9 +38,15 @@ if __name__ == "__main__":
     x0 = np.zeros(12)  # initial state
     sim_length = 30.0  # simulation time
     n_frames = int(10 * sim_length + 1)  # number of frames
-    # fps = 20.0  # animation fps
     tsim = np.linspace(0, sim_length, n_frames)  # query times
     t_sol, x_sol = simulator.simulate(x0, tsim)
+
+    # animating the solution
+    fps = 20.0  # animation fps
+    xyz_lims = ((-2, 2), (-2, 2), (-2, 2))
+    simulator.animate(t_sol, x_sol, xyz_lims, fps=fps)
+
+    # STATIC PLOTS #
 
     # plotting positional results
     o = x_sol[0:3, :]
@@ -68,5 +74,3 @@ if __name__ == "__main__":
     axs[1].set_xlabel("time")
     axs[1].set_ylabel("angle")
     axs[1].set_xlim([t_sol[0], t_sol[-1]])
-
-    plt.show()  # TODO: fix this also showing the simulator when unwanted
