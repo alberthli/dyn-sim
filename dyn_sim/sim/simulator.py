@@ -67,6 +67,7 @@ class SimulationEnvironment:
 
         # disturbance function
         if dfunc is not None:
+            raise NotImplementedError  # [TODO] fix the disturbance API
             dyn = lambda t, x: sys.dyn(t, x, ctrl(t, x)) + dfunc(t, x)
         else:
             dyn = lambda t, x: sys.dyn(t, x, ctrl(t, x))
