@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from dyn_sim.sys.dyn_sys import System
+from dyn_sim.util.ctrl_utils import BWLCMemory, FullMemory, MemoryBank
 
 
 class Controller(ABC):
@@ -39,11 +40,22 @@ class Controller(ABC):
             Control input.
         """
 
+
+class MemoryController(Controller):
+    """Abstract class for controllers requiring memory."""
+
+    _mem: MemoryBank = NotImplemented  # required MemoryBank attribute
+
+    def __init__(self, sys: System) -> None:
+        """Initialize a memory controller."""
+        super(MemoryController, self).__init__(sys)
+
     def reset(self) -> None:
-        """Resets controller internals. Used for controllers with memory."""
+        """Resets the controller memory."""
+        self._mem.reset()
 
 
-class BWLC(Controller):
+class BWLC(MemoryController):
     """Abstract class for bandwidth-limited controllers (BWLCs)."""
 
     def __init__(self, sys: System, wc: float) -> None:
@@ -58,11 +70,32 @@ class BWLC(Controller):
         """
         assert wc > 0.0
 
-        super(BWLC, self).__init__()
+        super(BWLC, self).__init__(sys)
         self._wc = wc
         self._dt = 1.0 / wc  # convenience dt for given wc
-        self._tmem = None  # memory for last ctrl update time
-        self._u = None  # memory for current ZOH ctrl input
+        self._mem = BWLCMemory()
+
+    @property
+    def _t_mem(self) -> float:
+        """Get time memory.
+
+        Returns
+        -------
+        t : float
+            Last remembered time.
+        """
+        return self._mem.t_mem
+
+    @property
+    def _u_mem(self) -> np.ndarray:
+        """Get control memory.
+
+        Returns
+        -------
+        u : np.ndarray, shape=(m,)
+            Last remembered control input.
+        """
+        return self._mem.u_mem
 
     @abstractmethod
     def _ctrl_update(self, t: float, x: np.ndarray) -> np.ndarray:
@@ -99,18 +132,104 @@ class BWLC(Controller):
         assert x.shape == (self._n,)
 
         # memory initialization
-        if self._tmem is None:
-            self._tmem = t
-            self._u = self._ctrl_update(t, x)
+        if self._t_mem is None:
+            self._mem.set_t(t)
+            self._mem.set_u(self._ctrl_update(t, x))
 
         # control update if enough time has elapsed
-        elif (t - self._tmem) > self._dt:
-            self._tmem = self._tmem + self._dt
-            self._u = self._ctrl_update(t, x)
+        elif (t - self._t_mem) > self._dt:
+            self._mem.set_t(self._t_mem + self._dt)
+            self._mem.set_u(self._ctrl_update(t, x))
 
         return self._u
 
-    def reset(self) -> None:
-        """Resets the controller memory."""
-        self._tmem = None
-        self._u = None
+
+class FullMemoryBWLC(BWLC):
+    """Abstract class for BWLC with full memory.
+
+    In particular, FullMemoryBWLCs store the entire time, state, and control history of the controller for the whole run.
+    """
+
+    def __init__(self, sys: System, wc: float) -> None:
+        """Initialize a FullMemoryBWLC.
+
+        Parameters
+        ----------
+        sys : System
+            Dynamical system to be controlled.
+        wc : float
+            The control frequency (Hz).
+        """
+        super(FullMemoryBWLC, self).__init__(sys)
+        self._mem = FullMemory()  # overwrite previous MemoryBlock type
+
+    @property
+    def _t_mem(self) -> np.ndarray:
+        """Get time memory.
+
+        Returns
+        -------
+        t : np.ndarray, shape=(T,)
+            Times in memory.
+        """
+        if self._mem.initialized:
+            return np.ndarray(self._mem.t_mem)
+        else:
+            return None
+
+    @property
+    def _x_mem(self) -> np.ndarray:
+        """Get state memory.
+
+        Returns
+        -------
+        x : np.ndarray, shape=(T, n)
+            States in memory.
+        """
+        if self._mem.initialized:
+            return np.ndarray(self._mem.x_mem)
+        else:
+            return None
+
+    @property
+    def _u_mem(self) -> np.ndarray:
+        """Get control memory.
+
+        Returns
+        -------
+        u : np.ndarray, shape=(T, m)
+            Control inputs in memory.
+        """
+        if self._mem.initialized:
+            return np.ndarray(self._mem.u_mem)
+        else:
+            return None
+
+    def ctrl(self, t: float, x: np.ndarray) -> np.ndarray:
+        """Full-memory bandwidth-limited control law.
+
+        Parameters
+        ----------
+        See parent function.
+
+        Returns
+        -------
+        See parent function.
+        """
+        assert x.shape == (self._n,)
+
+        # memory initialization
+        if not self._mem.initialized:
+            self._mem.add_t(t)
+            self._mem.add_x(x)
+            self._mem.add_u(self._ctrl_update(t, x))
+            return self._u
+
+        # control update if enough time has elapsed
+        t_last = self._t_mem[-1]
+        if (t - t_last) > self._dt:
+            self._mem.add_t(t_last + self._dt)
+            self._mem.add_x(x)
+            self._mem.add_u(self._ctrl_update(t, x))
+
+        return self._u
