@@ -29,9 +29,9 @@ class Controller(ABC):
 
         Parameters
         ----------
-        t: float
+        t : float
             Time.
-        x: np.ndarray, shape=(n,)
+        x : np.ndarray, shape=(n,)
             State.
 
         Returns
@@ -117,9 +117,9 @@ class BWLC(MemoryController):
 
         Parameters
         ----------
-        t: float
+        t : float
             Time.
-        x: np.ndarray, shape=(n,)
+        x : np.ndarray, shape=(n,)
             State.
 
         Returns
