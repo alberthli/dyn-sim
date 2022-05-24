@@ -4,8 +4,6 @@ from typing import List
 
 import numpy as np
 
-from dyn_sim.util.ctrl_utils import MemoryBank
-
 
 @dataclass  # type: ignore[misc]
 class MemoryBank(ABC):
@@ -29,7 +27,7 @@ class MemoryBank(ABC):
     x_mem: List[np.ndarray] = []
     u_mem: List[np.ndarray] = []
 
-    def __new__(cls, *args, **kwargs) -> MemoryBank:
+    def __new__(cls, *args, **kwargs) -> "MemoryBank":
         """Abstract class instantiation prevention function."""
         if cls == MemoryBank or cls.__bases__[0] == MemoryBank:
             raise TypeError("Cannot instantiate abstract class.")
