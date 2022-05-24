@@ -7,15 +7,8 @@ from dyn_sim.sys.planar.segway import Segway
 g = 9.80665  # gravitational acceleration
 
 
-class FLPosSegwayController(Controller):
-    """Feedback linearizing controller for segway.
-
-    Only capable of position regulation at the moment.
-    Could implement trajectory following using Callables.
-
-    Derivation of feedback linearizing controller available in
-    'CDS233: Project Submission 2'
-    """
+class FLPosRegSegwayController(Controller):
+    """Feedback linearizing controller for position regulation of a segway."""
 
     def __init__(
         self,
@@ -32,48 +25,48 @@ class FLPosSegwayController(Controller):
 
         Parameters
         ----------
-        seg: Segway
+        seg : Segway
             Segway object to be controlled.
-        p_star: float
+        p_star : float
             Position that segway will be regulated to.
-        alpha1: float
+        alpha1 : float
             First gain for output dynamics.
-        alpha2: float
+        alpha2 : float
             Second gain for output dynamics.
         """
         assert alpha1 > 0.0
         assert alpha2 > 0.0
 
-        super(FLPosSegwayController, self).__init__(seg)
+        super(FLPosRegSegwayController, self).__init__(seg)
 
         self._seg = seg
         self._p_star = p_star
         self._alpha1 = alpha1
         self._alpha2 = alpha2
 
-    def ctrl(self, t: float, s: np.ndarray) -> np.ndarray:
+    def ctrl(self, t: float, x: np.ndarray) -> np.ndarray:
         """Feedback linearizing control law.
 
         Parameters
         ----------
-        t: float
+        t : float
             Time.
-        s: np.ndarray
+        x : np.ndarray, shape=(4,)
             State.
 
         Returns
         -------
-        k: np.ndarray, shape = (1,)
+        u : np.ndarray, shape=(1,)
             Control input.
         """
-        assert s.shape == (self._n,)
+        assert x.shape == (self._n,)
 
         # gains
         alpha1 = self._alpha1
         alpha2 = self._alpha2
 
         # states
-        p, phi, dp, dphi = s
+        p, phi, dp, dphi = x
         sinphi = np.sin(phi)
         cosphi = np.cos(phi)
 
@@ -90,7 +83,8 @@ class FLPosSegwayController(Controller):
         )
 
         # relative degree condition
-        assert J0 + mass * R * L * cosphi > 0
+        if J0 + mass * R * L * cosphi <= 0:
+            raise ArithmeticError("Relative degree condition not satisfied.")
 
         # Lie derivatives
         h = p - self._p_star

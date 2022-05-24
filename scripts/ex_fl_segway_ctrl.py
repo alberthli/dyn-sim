@@ -4,7 +4,9 @@ import numpy as np
 
 sys.path.append("..")
 
-from dyn_sim.ctrl.segway.fdbk_lin_segway_ctrl import FLPosSegwayController  # noqa: E402
+from dyn_sim.ctrl.segway.fdbk_lin_segway_ctrl import (  # noqa: E402
+    FLPosRegSegwayController,
+)
 from dyn_sim.sim.simulator import SimulationEnvironment  # noqa: E402
 from dyn_sim.sys.planar.segway import Segway  # noqa: E402
 
@@ -12,7 +14,7 @@ from dyn_sim.sys.planar.segway import Segway  # noqa: E402
 seg = Segway()
 
 # FDBK LIN CONTROLLER #
-flc = FLPosSegwayController(seg, 0.0, 1.0, 1.0)
+flc = FLPosRegSegwayController(seg, 0.0, 1.0, 1.0)
 
 # SIMULATION ENVIRONMENT #
 simulator = SimulationEnvironment(seg, flc)

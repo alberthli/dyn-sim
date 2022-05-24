@@ -14,7 +14,7 @@ class Segway(CtrlAffineSystem):
     State vector is in R^4.
         state vector s is in order [p, phi, dp, dphi]
         p - horizontal position, positive right
-        phi - rotational position, positive cw
+        phi - rotational position, positive cw, 0 is vertical
         dp - time derivative of horizontal position
         dphi - time derivative of rotational position
     Input vector is in R.
@@ -63,14 +63,14 @@ class Segway(CtrlAffineSystem):
         self._l = l
         self._mass = mass
 
-    def fdyn(self, t: float, s: np.ndarray) -> np.ndarray:
+    def fdyn(self, t: float, x: np.ndarray) -> np.ndarray:
         """Segway autonomous dynamics.
 
         Parameters
         ----------
         t : float
             Time. Unused, included for API compliance.
-        s : np.ndarray, shape=(4,)
+        x : np.ndarray, shape=(4,)
             State of segway.
 
         Returns
@@ -78,10 +78,10 @@ class Segway(CtrlAffineSystem):
         _fdyn : np.ndarray, shape=(4,)
             Time derivatives of states from autonomous dynamics.
         """
-        assert s.shape == (4,)
+        assert x.shape == (4,)
 
         # states
-        _, phi, dp, dphi = s
+        _, phi, dp, dphi = x
         sinphi = np.sin(phi)
         cosphi = np.cos(phi)
 
@@ -107,14 +107,14 @@ class Segway(CtrlAffineSystem):
         _fdyn = np.array([dp, dphi, -DinvH[0], -DinvH[1]])
         return _fdyn
 
-    def gdyn(self, t: float, s: np.ndarray) -> np.ndarray:
+    def gdyn(self, t: float, x: np.ndarray) -> np.ndarray:
         """Segway control dynamics.
 
         Parameters
         ----------
         t : float
             Time. Unused, included for API compliance.
-        s : np.ndarray, shape=(4,)
+        x : np.ndarray, shape=(4,)
             State of segway.
 
         Returns
@@ -122,10 +122,10 @@ class Segway(CtrlAffineSystem):
         _gdyn : np.ndarray, shape=(4,)
             Matrix representing affine control dynamics.
         """
-        assert s.shape == (4,)
+        assert x.shape == (4,)
 
         # states
-        _, phi, _, _ = s
+        _, phi, _, _ = x
 
         # sinphi = np.sin(phi) # unused
         cosphi = np.cos(phi)
@@ -146,12 +146,12 @@ class Segway(CtrlAffineSystem):
         _gdyn = np.array([0, 0, DinvB[0], DinvB[1]])
         return _gdyn
 
-    def A(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
+    def A(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Linearized autonomous dynamics about (s, u).
 
         Parameters
         ----------
-        s : np.ndarray, shape=(4,)
+        x : np.ndarray, shape=(4,)
             State.
         u : float
             Input of the segway. Unused, included for API compliance.
@@ -161,17 +161,17 @@ class Segway(CtrlAffineSystem):
         _A : np.ndarray, shape=(4, 4)
             Linearized autonomous dynamics about s.
         """
-        assert s.shape == (4,)
+        assert x.shape == (4,)
         assert u.shape == (1,)
 
         raise NotImplementedError  # TODO implement linearized dynamics
 
-    def B(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
+    def B(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Linearized control dynamics about (s, u).
 
         Parameters
         ----------
-        s : np.ndarray, shape=(4,)
+        x : np.ndarray, shape=(4,)
             State.
         u : float
             Input of the quadrotor. Unused, included for API compliance.
@@ -181,24 +181,24 @@ class Segway(CtrlAffineSystem):
         _B : np.ndarray, shape=(4,)
             Linearized control dynamics about s.
         """
-        assert s.shape == (4,)
+        assert x.shape == (4,)
         assert u.shape == (1,)
 
         raise NotImplementedError  # TODO implement linearized dynamics
 
-    def draw(self, ax: Axes, s: np.ndarray) -> None:
+    def draw(self, ax: Axes, x: np.ndarray) -> None:
         """Draws the segway on specified Axes.
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes
             Axes object on which to draw the quadrotor.
-        s : np.ndarray, shape=(4,)
+        x : np.ndarray, shape=(4,)
             Current state of the segway.
         """
-        assert s.shape == (4,)
-        p = s[0]
-        phi = s[1]
+        assert x.shape == (4,)
+        p = x[0]
+        phi = x[1]
         sinphi = np.sin(phi)
         cosphi = np.cos(phi)
 
