@@ -31,12 +31,8 @@ class SLMPC(FullMemoryBWLC):
         mpc_P: Optional[np.ndarray],
         mpc_Q: np.ndarray,
         mpc_R: np.ndarray,
-        x_ref: Callable[
-            [float, Optional[np.ndarray], Optional[MemoryBank]], np.ndarray
-        ],
-        u_ref: Callable[
-            [float, Optional[np.ndarray], Optional[MemoryBank]], np.ndarray
-        ],
+        x_ref: Callable[[float, np.ndarray, MemoryBank], np.ndarray],
+        u_ref: Callable[[float, np.ndarray, MemoryBank], np.ndarray],
         mpc_h: Optional[float] = None,
     ) -> None:
         """Initialize a SLMPC.
@@ -55,10 +51,10 @@ class SLMPC(FullMemoryBWLC):
             The stage state cost weighting matrix.
         mpc_R : np.ndarray, shape=(m, m)
             The stage input cost weighting matrix.
-        x_ref : Callable[[float, Optional[np.ndarray], Optional[MemoryBank]], np.ndarray]
-            Reference function for state. Takes in time and optionally the current state and memory. Returns the desired state at t.
-        u_ref : Callable[[float, Optional[np.ndarray], Optional[MemoryBank]], np.ndarray]
-            Reference function for input. Takes in time and optionally the current state and memory. Returns the desired input at t.
+        x_ref : Callable[[float, np.ndarray, MemoryBank], np.ndarray]
+            Reference function for state. Takes in time, current state, and memory so that complicated reference trajectories can be computed. Returns the desired state at input time t.
+        u_ref : Callable[[float, np.ndarray, MemoryBank], np.ndarray]
+            See x_ref, same but for control input.
         mpc_h : Optional[float]
             The time-discretization (sec) of the MPC subproblem. By default assumed to be dt (see below).
         """
