@@ -1,7 +1,9 @@
+from typing import Optional
+
 import numpy as np
 from matplotlib.axes import Axes
 
-from dyn_sim.sys.dyn_sys import CtrlAffineSystem
+from dyn_sim.sys.sys_core import CtrlAffineSystem
 from dyn_sim.util.sim_utils import draw_circle
 
 # constants
@@ -59,7 +61,7 @@ class Quadrotor(CtrlAffineSystem):
         kf: float,
         km: float,
         l: float,
-        Jtp: float = None,
+        Jtp: Optional[float] = None,
     ) -> None:
         """Initialize a quadrotor.
 

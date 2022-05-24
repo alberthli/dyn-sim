@@ -4,15 +4,32 @@ from typing import List
 
 import numpy as np
 
+from dyn_sim.util.ctrl_utils import MemoryBank
 
-@dataclass
+
+@dataclass  # type: ignore[misc]
 class MemoryBank(ABC):
     """Abstract dataclass to prevent instantiation.
 
     See: stackoverflow.com/questions/60590442.
+
+    Subclasses will process the memory components in different ways. Lists are used instead of numpy arrays for fast appending.
+
+    Fields
+    ------
+    t_mem : List[float]
+        List of past times with computations.
+    x_mem : List[np.ndarray]
+        List of past remembered states of the system.
+    u_mem : List[np.ndarray]
+        List of past applied control inputs of the system.
     """
 
-    def __new__(cls, *args, **kwargs) -> None:
+    t_mem: List[float] = []
+    x_mem: List[np.ndarray] = []
+    u_mem: List[np.ndarray] = []
+
+    def __new__(cls, *args, **kwargs) -> MemoryBank:
         """Abstract class instantiation prevention function."""
         if cls == MemoryBank or cls.__bases__[0] == MemoryBank:
             raise TypeError("Cannot instantiate abstract class.")
@@ -29,51 +46,57 @@ class BWLCMemory(MemoryBank):
 
     Fields
     ------
-    t_mem : float
-        Last time the controller updated.
-    u_mem : np.ndarray, shape=(m,)
-        Last control input computed.
+    t_mem : List[float]
+        List of most recent computation time.
+    x_mem : List[np.ndarray]
+        Unused. Inherited for API compliance.
+    u_mem : List[np.ndarray]
+        List of most recent computed control input.
     """
-
-    t_mem: float = None
-    u_mem: np.ndarray = None
 
     @property
     def initialized(self) -> bool:
         """Flag for whether memory is initialized."""
-        return self.t_mem is not None and self.u_mem is not None
+        return len(self.t_mem) > 0 and len(self.u_mem) > 0
 
-    def set_t(self, t: float) -> None:
-        """Set the remembered time.
+    def rem_t(self, t: float) -> None:
+        """Remember the remembered time.
 
         Parameters
         ----------
         t : float
             Time to remember.
         """
-        self.t_mem = t
+        self.t_mem = [t]
 
-    def set_u(self, u: np.ndarray) -> None:
-        """Set the remembered ctrl.
+    def rem_x(self, x: np.ndarray) -> None:
+        """Set the remembered ctrl. Does nothing.
+
+        Parameters
+        ----------
+        x : np.ndarray, shape=(x,)
+            State to remember.
+        """
+
+    def rem_u(self, u: np.ndarray) -> None:
+        """Remember the remembered ctrl.
 
         Parameters
         ----------
         u : np.ndarray, shape=(m,)
             Control input to remember.
         """
-        self.u_mem = u
+        self.u_mem = [u]
 
     def reset(self) -> None:
         """Reset the time and control input."""
-        self.t_mem = None
-        self.u_mem = None
+        self.t_mem = []
+        self.u_mem = []
 
 
 @dataclass
-class FullMemory(MemoryBank):
+class FullMemory(BWLCMemory):
     """Dataclass for holding full memory of a BWLC.
-
-    Stored as lists for cheap dynamic memory.
 
     Fields
     ------
@@ -85,18 +108,12 @@ class FullMemory(MemoryBank):
         List of all past applied control inputs of the system.
     """
 
-    t_mem: List[float] = None
-    x_mem: List[np.ndarray] = None
-    u_mem: List[np.ndarray] = None
-
     @property
     def initialized(self) -> bool:
         """Flag for whether memory is initialized."""
-        return (
-            self.t_mem is not None and self.u_mem is not None and self.x_mem is not None
-        )
+        return len(self.t_mem) > 0 and len(self.u_mem) > 0 and len(self.x_mem) > 0
 
-    def add_t(self, t: float) -> None:
+    def rem_t(self, t: float) -> None:
         """Add time to memory.
 
         Parameters
@@ -104,12 +121,9 @@ class FullMemory(MemoryBank):
         t : float
             Time to remember.
         """
-        if self.t_mem is None:
-            self.t_mem = [t]
-        else:
-            self.t_mem.append(t)
+        self.t_mem.append(t)
 
-    def add_x(self, x: np.ndarray) -> None:
+    def rem_x(self, x: np.ndarray) -> None:
         """Set the remembered ctrl.
 
         Parameters
@@ -117,12 +131,9 @@ class FullMemory(MemoryBank):
         x : np.ndarray, shape=(x,)
             State to remember.
         """
-        if self.x_mem is None:
-            self.x_mem = [x]
-        else:
-            self.x_mem.append(x)
+        self.x_mem.append(x)
 
-    def add_u(self, u: np.ndarray) -> None:
+    def rem_u(self, u: np.ndarray) -> None:
         """Set the remembered ctrl.
 
         Parameters
@@ -130,13 +141,10 @@ class FullMemory(MemoryBank):
         u : np.ndarray, shape=(m,)
             Control input to remember.
         """
-        if self.u_mem is None:
-            self.u_mem = [u]
-        else:
-            self.u_mem.append(u)
+        self.u_mem.append(u)
 
     def reset(self) -> None:
         """Reset the time, state, and control memory."""
-        self.t_mem = None
-        self.x_mem = None
-        self.u_mem = None
+        self.t_mem = []
+        self.x_mem = []
+        self.u_mem = []

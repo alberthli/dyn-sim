@@ -2,7 +2,7 @@ from typing import Callable
 
 import numpy as np
 
-from dyn_sim.ctrl.ctrl import Controller
+from dyn_sim.ctrl.ctrl_core import Controller
 from dyn_sim.sys.spatial.quad import Quadrotor
 
 # constants
@@ -44,7 +44,7 @@ class PDQuadController(Controller):
         assert kd_a >= 0.0
 
         super(PDQuadController, self).__init__(quad)
-
+        self._sys: Quadrotor
         self._kp_xyz = kp_xyz  # xy pd gains
         self._kd_xyz = kd_xyz  # attitude pd gains
         self._kp_a = kp_a
