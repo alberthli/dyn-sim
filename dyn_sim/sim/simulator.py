@@ -4,7 +4,6 @@ import matplotlib.animation as animation
 import matplotlib.axes.Axes as Axes
 import matplotlib.figure.Figure as Figure
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
 import mpl_toolkits.mplot3d.axes3d.Axes3D as Axes3D
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -111,15 +110,23 @@ class SimulationEnvironment:
         xlim, ylim, zlim = lims
 
         self._fig = plt.figure()
-        self._ax = p3.Axes3D(self._fig)
-        self._ax.set_proj_type("ortho")
-        self._ax.grid(False)
-        self._ax.set_xticks([])
-        self._ax.set_yticks([])
-        self._ax.set_zticks([])
-        self._ax.set_xlim3d(xlim)
-        self._ax.set_ylim3d(ylim)
-        self._ax.set_zlim3d(zlim)
+        if self._sys._is3d:
+            self._ax = Axes3D(self._fig)
+            self._ax.set_proj_type("ortho")
+            self._ax.grid(False)
+            self._ax.set_xticks([])
+            self._ax.set_yticks([])
+            self._ax.set_zticks([])
+            self._ax.set_xlim3d(xlim)
+            self._ax.set_ylim3d(ylim)
+            self._ax.set_zlim3d(zlim)
+        else:
+            self._ax = Axes(self._fig)
+            self._ax.grid(False)
+            self._ax.set_xticks([])
+            self._ax.set_yticks([])
+            self._ax.set_xlim3d(xlim)
+            self._ax.set_ylim3d(ylim)
 
         def _clear_frame() -> None:
             """Clear the environment frame."""
@@ -144,6 +151,9 @@ class SimulationEnvironment:
         plt.show()
         _clear_frame()
 
+    # ###################################### #
+    # KEEP FOR NOW WHILE REFACTOR IS ONGOING #
+    # ###################################### #
     # def simulate(
     #     self,
     #     s0: np.ndarray,
