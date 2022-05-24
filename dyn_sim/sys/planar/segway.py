@@ -146,7 +146,7 @@ class Segway(CtrlAffineSystem):
         _gdyn = np.array([0, 0, DinvB[0], DinvB[1]])
         return _gdyn
 
-    def A(self, s: np.ndarray, u: float) -> np.ndarray:
+    def A(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Linearized autonomous dynamics about (s, u).
 
         Parameters
@@ -166,7 +166,7 @@ class Segway(CtrlAffineSystem):
 
         raise NotImplementedError  # TODO implement linearized dynamics
 
-    def B(self, s: np.ndarray, u: float) -> np.ndarray:
+    def B(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Linearized control dynamics about (s, u).
 
         Parameters
