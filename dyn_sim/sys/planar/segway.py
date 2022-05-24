@@ -12,13 +12,19 @@ class Segway(CtrlAffineSystem):
     """Segway object.
 
     State vector is in R^4.
-        state vector s is in order [p, phi, dp, dphi]
-        p - horizontal position, positive right
-        phi - rotational position, positive cw, 0 is vertical
-        dp - time derivative of horizontal position
-        dphi - time derivative of rotational position
+        state vector x is in order [p, phi, dp, dphi]
+        p : horizontal position, positive right
+        phi : rotational position, positive cw, 0 is vertical
+        dp : time derivative of horizontal position
+        dphi : time derivative of rotational position
     Input vector is in R.
-        u - motor voltage
+        u : motor voltage
+
+    Segway dynamics retrieved from:
+        T. Molnar, A. Kiss, A. Ames, and G. Orosz, “Safety-critical
+        control with input delay in dynamic environment,” Dec. 2021,
+        unpublished, online at https://arxiv.org/pdf/2112.08445.pdf.
+
     """
 
     def __init__(
@@ -52,6 +58,8 @@ class Segway(CtrlAffineSystem):
             Length between center of rotation and tip of segway arm.
         mass : float
             Mass of upper segway arm (name spelled out to prevent collision).
+
+        Default parameters retrieved from Molnar (2021), see Segway docstring for link.
         """
         super(Segway, self).__init__(4, 1, False)
         self._m0 = m0
@@ -127,7 +135,6 @@ class Segway(CtrlAffineSystem):
         # states
         _, phi, _, _ = x
 
-        # sinphi = np.sin(phi) # unused
         cosphi = np.cos(phi)
 
         # inertia matrix
@@ -202,11 +209,11 @@ class Segway(CtrlAffineSystem):
         sinphi = np.sin(phi)
         cosphi = np.cos(phi)
 
-        pos0 = np.array([p, 0, 0])
-        pos1 = np.array([p + self._l * sinphi, self._l * cosphi, 0])
+        pos0 = np.array([p, 0])
+        pos1 = np.array([p + self._l * sinphi, self._l * cosphi])
 
         # drawing segway wheel
-        draw_circle(ax, pos0, self._R, n=np.array([0, 0, 1]), color="green")
+        draw_circle(ax, pos0, self._R, color="green")
 
         # drawing segway arm
         ax.plot([pos0[0], pos1[0]], [pos0[1], pos1[1]], "k-")

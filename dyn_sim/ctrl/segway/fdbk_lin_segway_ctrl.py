@@ -19,7 +19,7 @@ class FLPosRegSegwayController(Controller):
     ) -> None:
         """Initialize a segway feedback linearizing controller.
 
-        Note by the Routh-Hurwitz criterion, for 2-d output dynamics,
+        Note by the Routh-Hurwitz criterion, for 2D output dynamics,
         a necessary and sufficient condition for (exponential) stability is both
         alpha1 and alpha2 are positive.
 

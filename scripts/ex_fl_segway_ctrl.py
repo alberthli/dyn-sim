@@ -27,7 +27,6 @@ if __name__ == "__main__":
     t_sol, x_sol = simulator.simulate(x0, horizon)
 
     # animate
-    # TODO implement 2d animation
     fps = 20.0
     lims = ((-2, 2), (-2, 2), (-1, 1))
     simulator.animate(t_sol, x_sol, lims, fps=fps)
