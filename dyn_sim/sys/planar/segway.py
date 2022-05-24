@@ -32,6 +32,7 @@ class Segway(CtrlAffineSystem):
         R: float = 0.195,
         bt: float = 2 * 1.225,
         l: float = 0.75,
+        mass: float = 44.798,
     ) -> None:
         """Initialize a segway.
 
@@ -51,6 +52,8 @@ class Segway(CtrlAffineSystem):
             Motor damping constant.
         l : float
             Length between center of rotation and tip of segway arm.
+        mass : float
+            Mass of upper segway arm (name spelled out to prevent collision).
         """
         super(Segway, self).__init__(4, 1, False)
         self._m0 = m0
@@ -60,6 +63,7 @@ class Segway(CtrlAffineSystem):
         self._R = R
         self._bt = bt
         self._l = l
+        self._mass = mass
 
     def fdyn(self, t: float, s: np.ndarray) -> np.ndarray:
         """Segway autonomous dynamics.
