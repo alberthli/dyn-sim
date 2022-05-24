@@ -7,9 +7,7 @@ import numpy as np
 
 @dataclass  # type: ignore[misc]
 class MemoryBank(ABC):
-    """Abstract dataclass to prevent instantiation.
-
-    See: stackoverflow.com/questions/60590442.
+    """Abstract MemoryBank dataclass.
 
     Subclasses will process the memory components in different ways. Lists are used instead of numpy arrays for fast appending.
 
@@ -28,7 +26,10 @@ class MemoryBank(ABC):
     u_mem: List[np.ndarray] = []
 
     def __new__(cls, *args, **kwargs) -> "MemoryBank":
-        """Abstract class instantiation prevention function."""
+        """Abstract class instantiation prevention function.
+
+        See: stackoverflow.com/questions/60590442.
+        """
         if cls == MemoryBank or cls.__bases__[0] == MemoryBank:
             raise TypeError("Cannot instantiate abstract class.")
         return super().__new__(cls)
@@ -109,7 +110,10 @@ class FullMemory(BWLCMemory):
     @property
     def initialized(self) -> bool:
         """Flag for whether memory is initialized."""
-        return len(self.t_mem) > 0 and len(self.u_mem) > 0 and len(self.x_mem) > 0
+        lt = len(self.t_mem)
+        lx = len(self.x_mem)
+        lu = len(self.u_mem)
+        return lt > 0 and lx > 0 and lu > 0
 
     def rem_t(self, t: float) -> None:
         """Add time to memory.
