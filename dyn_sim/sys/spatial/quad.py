@@ -224,7 +224,7 @@ class Quadrotor(CtrlAffineSystem):
 
         Parameters
         ----------
-        t : float,
+        t : float
             Time. Unused, included for API compliance.
         s : np.ndarray, shape=(12,)
             State of quadrotor.

@@ -38,19 +38,19 @@ class Segway(CtrlAffineSystem):
         Parameters
         ----------
         m0 : float
-            Lumped mass of the segway
+            Lumped mass of the segway.
         L : float
-            Length between the center of rotation and center of gravity
+            Length between the center of rotation and center of gravity.
         J0 : float
-            Lumped inertia of the segway
+            Lumped inertia of the segway.
         Km : float
-            Motor Torque constant
+            Motor Torque constant.
         R : float
-            Wheel radius
+            Wheel radius.
         bt : float
-            Motor damping constant
+            Motor damping constant.
         l : float
-            Length between center of rotation and tip of segway arm
+            Length between center of rotation and tip of segway arm.
         """
         super(Segway, self).__init__(4, 1, False)
         self._m0 = m0
@@ -66,7 +66,7 @@ class Segway(CtrlAffineSystem):
 
         Parameters
         ----------
-        t : float,
+        t : float
             Time. Unused, included for API compliance.
         s : np.ndarray, shape=(4,)
             State of segway.
@@ -79,10 +79,7 @@ class Segway(CtrlAffineSystem):
         assert s.shape == (4,)
 
         # states
-        # p = s[0] # unused
-        phi = s[1]
-        dp = s[2]
-        dphi = s[3]
+        _, phi, dp, dphi = s
 
         sinphi = np.sin(phi)
         cosphi = np.cos(phi)
@@ -115,7 +112,7 @@ class Segway(CtrlAffineSystem):
 
         Parameters
         ----------
-        t : float,
+        t : float
             Time. Unused, included for API compliance.
         s : np.ndarray, shape=(4,)
             State of segway.
@@ -128,10 +125,7 @@ class Segway(CtrlAffineSystem):
         assert s.shape == (4,)
 
         # states
-        # p = s[0] # unused
-        phi = s[1]
-        # dp = s[2] # unused
-        # dphi = s[3] # unused
+        _, phi, _, _ = s
 
         # sinphi = np.sin(phi) # unused
         cosphi = np.cos(phi)
