@@ -5,9 +5,7 @@ from dyn_sim.sys.dyn_sys import CtrlAffineSystem
 from dyn_sim.util.sim_utils import draw_circle
 
 # constants
-constants = {
-    "g": 9.80665,  # gravitational acceleration
-}
+g = 9.80665  # gravitational acceleration
 
 
 class Segway(CtrlAffineSystem):
@@ -84,7 +82,6 @@ class Segway(CtrlAffineSystem):
 
         # states
         _, phi, dp, dphi = s
-
         sinphi = np.sin(phi)
         cosphi = np.cos(phi)
 
@@ -102,8 +99,7 @@ class Segway(CtrlAffineSystem):
             [
                 -self._m * self._L * sinphi * dphi**2
                 + self._bt * (dp - self._R * dphi) / self._R,
-                -self._m * self._g * self._L * sinphi
-                + self._bt * (dp - self._R * dphi),
+                -self._m * g * self._L * sinphi + self._bt * (dp - self._R * dphi),
             ]
         )
 
@@ -166,7 +162,7 @@ class Segway(CtrlAffineSystem):
             Linearized autonomous dynamics about s.
         """
         assert s.shape == (4,)
-        assert np.isscalar(u)
+        assert u.shape == (1,)
 
         raise NotImplementedError  # TODO implement linearized dynamics
 
@@ -186,7 +182,7 @@ class Segway(CtrlAffineSystem):
             Linearized control dynamics about s.
         """
         assert s.shape == (4,)
-        assert np.isscalar(u)
+        assert u.shape == (1,)
 
         raise NotImplementedError  # TODO implement linearized dynamics
 
@@ -206,11 +202,11 @@ class Segway(CtrlAffineSystem):
         sinphi = np.sin(phi)
         cosphi = np.cos(phi)
 
-        pos0 = np.array([p, 0])
-        pos1 = np.array([[cosphi, sinphi], [-sinphi, cosphi]]) @ np.array([p, self._l])
+        pos0 = np.array([p, 0, 0])
+        pos1 = np.array([p + self._l * sinphi, self._l * cosphi, 0])
 
         # drawing segway wheel
-        draw_circle(ax, pos0, self._R, color="green")
+        draw_circle(ax, pos0, self._R, n=np.array([0, 0, 1]), color="green")
 
         # drawing segway arm
-        ax.plot(pos0, pos1, "k-")
+        ax.plot([pos0[0], pos1[0]], [pos0[1], pos1[1]], "k-")

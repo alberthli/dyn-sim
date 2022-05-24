@@ -46,6 +46,7 @@ class FLPosSegwayController(Controller):
 
         super(FLPosSegwayController, self).__init__(seg)
 
+        self._seg = seg
         self._p_star = p_star
         self._alpha1 = alpha1
         self._alpha2 = alpha2
@@ -105,4 +106,4 @@ class FLPosSegwayController(Controller):
         )
 
         k = 1 / LgLfh * (-Lf2h - alpha2 * Lfh - alpha1 * h)
-        return k
+        return np.array([k])
