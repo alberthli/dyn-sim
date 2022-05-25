@@ -1,16 +1,5 @@
 # Dynamical Simulation Environment
 
-## TODOs
-- [] Controllers
-	- [] General API for constraints (pick optimizer)
-	- [] MPC via successive linearization
-	- [] iLQR
-- [] Simulator
-	- [X] Add back in animation
-	- [] Add back in obstacles
-	- [] Clean up disturbance injection API once everything else is stable
-- [] (Long-Term) Observers
-
 ## Overview
 This repository is a catch-all simulation environment for studying controllers (which may have bandwidth limitations) for dynamical systems.
 ### File Structure
