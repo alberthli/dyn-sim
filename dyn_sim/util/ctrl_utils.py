@@ -1,12 +1,23 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 import numpy as np
 
 
+@dataclass
+class AbstractDataclass(ABC):
+    """Abstract dataclass."""
+
+    def __new__(cls, *args, **kwargs) -> "AbstractDataclass":
+        """See: stackoverflow.com/questions/60590442."""
+        if cls == AbstractDataclass or cls.__bases__[0] == AbstractDataclass:
+            raise TypeError("Cannot instantiate abstract class.")
+        return super().__new__(cls)
+
+
 @dataclass  # type: ignore[misc]
-class MemoryBank(ABC):
+class MemoryBank(AbstractDataclass):
     """Abstract MemoryBank dataclass.
 
     Subclasses will process the memory components in different ways. Lists are used instead of numpy arrays for fast appending.
@@ -21,18 +32,9 @@ class MemoryBank(ABC):
         List of past applied control inputs of the system.
     """
 
-    t_mem: List[float] = []
-    x_mem: List[np.ndarray] = []
-    u_mem: List[np.ndarray] = []
-
-    def __new__(cls, *args, **kwargs) -> "MemoryBank":
-        """Abstract class instantiation prevention function.
-
-        See: stackoverflow.com/questions/60590442.
-        """
-        if cls == MemoryBank or cls.__bases__[0] == MemoryBank:
-            raise TypeError("Cannot instantiate abstract class.")
-        return super().__new__(cls)
+    t_mem: List[float] = field(default_factory=list)
+    x_mem: List[np.ndarray] = field(default_factory=list)
+    u_mem: List[np.ndarray] = field(default_factory=list)
 
     @abstractmethod
     def reset(self) -> None:

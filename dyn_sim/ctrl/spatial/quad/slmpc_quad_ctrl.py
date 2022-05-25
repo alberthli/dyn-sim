@@ -1,8 +1,8 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
+import gurobipy as gp
 import numpy as np
 
-from dyn_sim.ctrl.ctrl_core import MemoryBank
 from dyn_sim.ctrl.mpc import SLMPC
 from dyn_sim.sys.spatial.quad import Quadrotor
 from dyn_sim.sys.sys_core import System
@@ -22,8 +22,8 @@ class SLMPCQuadController(SLMPC):
         mpc_P: Optional[np.ndarray],
         mpc_Q: np.ndarray,
         mpc_R: np.ndarray,
-        x_ref: Callable[[float, np.ndarray, MemoryBank], np.ndarray],
-        u_ref: Callable[[float, np.ndarray, MemoryBank], np.ndarray],
+        x_ref: Callable[[float, np.ndarray, SLMPC], Union[np.ndarray, gp.MVar]],
+        u_ref: Callable[[float, np.ndarray, SLMPC], Union[np.ndarray, gp.MVar]],
         mpc_h: Optional[float] = None,
     ) -> None:
         """Initialize a SLMPCQuadController."""

@@ -1,11 +1,11 @@
 from typing import Callable, Optional, Tuple, Union
 
 import matplotlib.animation as animation
-import matplotlib.axes.Axes as Axes
-import matplotlib.figure.Figure as Figure
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d.Axes3D as Axes3D
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.pyplot import Figure
+from mpl_toolkits.mplot3d.axes3d import Axes3D
 from scipy.integrate import solve_ivp
 
 from dyn_sim.ctrl.ctrl_core import Controller, MemoryController

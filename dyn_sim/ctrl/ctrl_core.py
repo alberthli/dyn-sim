@@ -148,7 +148,7 @@ class BWLC(MemoryController):
             self._mem.rem_t(t)
             self._mem.rem_x(x)
             self._mem.rem_u(self._ctrl_update(t, x))
-            return self._u_mem
+            return self._u_mem[-1]
 
         # control update if enough time has elapsed
         elif (t - self._t_last) > self._dt:
@@ -156,7 +156,7 @@ class BWLC(MemoryController):
             self._mem.rem_x(x)
             self._mem.rem_u(self._ctrl_update(t, x))
 
-        return self._u_mem
+        return self._u_mem[-1]
 
 
 class FullMemoryBWLC(BWLC):
