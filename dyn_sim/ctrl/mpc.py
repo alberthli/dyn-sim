@@ -233,7 +233,7 @@ class SLMPC(FullMemoryBWLC):
         if self._gpmodel.Status in [3, 4, 5]:
             raise RuntimeError("Infeasible or unbounded subproblem!")
         else:
-            u = u_var[0, :].X.flatten()
+            u = u_var[0, :].X
         self._reset_gpmodel()
 
         return u
