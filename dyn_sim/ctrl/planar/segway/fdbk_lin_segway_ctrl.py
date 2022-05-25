@@ -1,6 +1,6 @@
 import numpy as np
 
-from dyn_sim.ctrl.ctrl import Controller
+from dyn_sim.ctrl.ctrl_core import Controller
 from dyn_sim.sys.planar.segway import Segway
 
 # constants
