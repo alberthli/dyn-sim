@@ -5,7 +5,7 @@ import numpy as np
 
 sys.path.append("..")
 
-from dyn_sim.ctrl.quad.pd_quad_ctrl import PDQuadController  # noqa: E402
+from dyn_sim.ctrl.spatial.quad.pd_quad_ctrl import PDQuadController  # noqa: E402
 from dyn_sim.sim.simulator import SimulationEnvironment  # noqa: E402
 from dyn_sim.sys.spatial.quad import Quadrotor  # noqa: E402
 
