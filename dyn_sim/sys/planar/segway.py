@@ -88,26 +88,28 @@ class Segway(CtrlAffineSystem):
         """
         assert x.shape == (4,)
 
+        # unpacking variables
+        m0 = self._m0
+        m = self._m
+        L = self._L
+        J0 = self._J0
+        bt = self._bt
+        R = self._R
+
         # states
         _, phi, dp, dphi = x
         sinphi = np.sin(phi)
         cosphi = np.cos(phi)
 
-        # inertia matrix
-        D = np.array(
-            [
-                [self._m0, self._m * self._L * cosphi],
-                [self._m * self._L * cosphi, self._J0],
-            ]
-        )
-        Dinv = np.linalg.inv(D)
+        # inverse inertia matrix
+        denom = J0 * m0 - L**2 * m**2 * cosphi**2
+        Dinv = np.array([[J0, -m * L * cosphi], [-m * L * cosphi, m0]]) / denom
 
         # coriolis & gravity matrix
         H = np.array(
             [
-                -self._m * self._L * sinphi * dphi**2
-                + self._bt * (dp - self._R * dphi) / self._R,
-                -self._m * g * self._L * sinphi + self._bt * (dp - self._R * dphi),
+                -m * L * sinphi * dphi**2 + bt * (dp - R * dphi) / R,
+                -m * g * L * sinphi + bt * (dp - R * dphi),
             ]
         )
 
@@ -132,22 +134,25 @@ class Segway(CtrlAffineSystem):
         """
         assert x.shape == (4,)
 
+        # unpacking variables
+        m0 = self._m0
+        m = self._m
+        L = self._L
+        J0 = self._J0
+        Km = self._Km
+        R = self._R
+
         # states
         _, phi, _, _ = x
 
         cosphi = np.cos(phi)
 
-        # inertia matrix
-        D = np.array(
-            [
-                [self._m0, self._m * self._L * cosphi],
-                [self._m * self._L * cosphi, self._J0],
-            ]
-        )
-        Dinv = np.linalg.inv(D)
+        # inverse inertia matrix
+        denom = J0 * m0 - L**2 * m**2 * cosphi**2
+        Dinv = np.array([[J0, -m * L * cosphi], [-m * L * cosphi, m0]]) / denom
 
         # input matrix
-        B = np.array([self._Km / self._R, -self._Km])
+        B = np.array([Km / R, -Km])
 
         DinvB = Dinv @ B
         _gdyn = np.array([0, 0, DinvB[0], DinvB[1]])
