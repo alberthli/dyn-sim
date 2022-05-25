@@ -411,7 +411,7 @@ class Quadrotor(CtrlAffineSystem):
         Returns
         -------
         _A : np.ndarray, shape=(12, 12)
-            Linearized autonomous dynamics about s.
+            Linearized autonomous dynamics about (s, u).
         """
         assert s.shape == (12,)
 
