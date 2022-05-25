@@ -8,7 +8,10 @@ g = 9.80665  # gravitational acceleration
 
 
 class FLPosRegSegwayController(Controller):
-    """Feedback linearizing controller for position regulation of a segway."""
+    """Feedback linearizing controller for position regulation of a segway.
+
+    Note on terminology: this controller actually performs input-output linearization, but we generally refer to everything as feedback linearization.
+    """
 
     def __init__(
         self,

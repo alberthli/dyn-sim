@@ -4,7 +4,7 @@ import numpy as np
 
 sys.path.append("..")
 
-from dyn_sim.ctrl.segway.fdbk_lin_segway_ctrl import (  # noqa: E402
+from dyn_sim.ctrl.planar.segway.fdbk_lin_segway_ctrl import (  # noqa: E402
     FLPosRegSegwayController,
 )
 from dyn_sim.sim.simulator import SimulationEnvironment  # noqa: E402
@@ -26,7 +26,8 @@ if __name__ == "__main__":
     horizon = np.linspace(0, sim_length, n_frames)
     t_sol, x_sol = simulator.simulate(x0, horizon)
 
+    # [TODO] fix 2D animations
     # animate
-    fps = 20.0
-    lims = ((-2, 2), (-2, 2), (-1, 1))
-    simulator.animate(t_sol, x_sol, lims, fps=fps)
+    # fps = 20.0
+    # lims = ((-2, 2), (-2, 2), (-1, 1))
+    # simulator.animate(t_sol, x_sol, lims, fps=fps)

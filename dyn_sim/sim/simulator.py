@@ -122,15 +122,16 @@ class SimulationEnvironment:
             self._ax.set_ylim3d(ylim)
             self._ax.set_zlim3d(zlim)
         else:
-            self._ax = plt.Axes(
-                self._fig, [0, 0, self._fig.get_figwidth(), self._fig.get_figheight()]
-            )
-            self._ax = plt.Axes(self._fig, [0, 0, 1, 1])
-            self._ax.grid(False)
-            self._ax.set_xticks([])
-            self._ax.set_yticks([])
-            self._ax.set_xlim(xlim)
-            self._ax.set_ylim(ylim)
+            raise NotImplementedError  # [TODO] fix 2D animations
+            # self._ax = plt.Axes(
+            #     self._fig, [0, 0, self._fig.get_figwidth(), self._fig.get_figheight()]
+            # )
+            # self._ax = plt.Axes(self._fig, [0, 0, 1, 1])
+            # self._ax.grid(False)
+            # self._ax.set_xticks([])
+            # self._ax.set_yticks([])
+            # self._ax.set_xlim(xlim)
+            # self._ax.set_ylim(ylim)
 
         def _clear_frame() -> None:
             """Clear the environment frame."""
