@@ -43,8 +43,10 @@ if __name__ == "__main__":
 
     # animating the solution
     fps = 20.0  # animation fps
-    xyz_lims = ((-2, 2), (-2, 2), (-2, 2))
-    simulator.animate(t_sol, x_sol, xyz_lims, fps=fps)
+    xlim = (-2, 2)
+    ylim = (-2, 2)
+    zlim = (-2, 2)
+    simulator.animate(t_sol, x_sol, xlim, ylim, zlim=zlim, fps=fps)
 
     # STATIC PLOTS #
 

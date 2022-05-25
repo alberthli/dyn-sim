@@ -2,7 +2,6 @@ import sys
 from typing import Union
 
 import gurobipy as gp
-import matplotlib.pyplot as plt
 import numpy as np
 
 sys.path.append("..")
@@ -125,16 +124,13 @@ simulator = SimulationEnvironment(segway, slmpc)
 if __name__ == "__main__":
     # running simulation
     x0 = np.zeros(4)  # initial state
-    sim_length = 30.0  # simulation time
+    sim_length = 10.0  # simulation time
     n_frames = int(10 * sim_length + 1)  # number of frames
     tsim = np.linspace(0, sim_length, n_frames)  # query times
     t_sol, x_sol = simulator.simulate(x0, tsim)
 
-    # debug
-    plt.plot(t_sol, x_sol[0, :])
-    plt.show()
-
     # animating the solution
-    # fps = 20.0  # animation fps
-    # xyz_lims = ((-2, 2), (-2, 2), (-2, 2))
-    # simulator.animate(t_sol, x_sol, xyz_lims, fps=fps)
+    fps = 20.0  # animation fps
+    xlim = (-3, 3)
+    ylim = (0, 3)
+    simulator.animate(t_sol, x_sol, xlim, ylim, fps=fps)

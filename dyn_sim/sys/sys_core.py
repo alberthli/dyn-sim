@@ -1,7 +1,9 @@
 from abc import ABC, ABCMeta, abstractmethod
+from typing import Optional, Union
 
 import numpy as np
 from matplotlib.axes import Axes
+from mpl_toolkits.mplot3d.axes3d import Axes3D
 
 
 class System(ABC):
@@ -82,12 +84,12 @@ class System(ABC):
         """
 
     @abstractmethod
-    def draw(self, ax: Axes, x: np.ndarray) -> None:
+    def draw(self, ax: Optional[Union[Axes, Axes3D]], x: np.ndarray) -> None:
         """Draw the current state on the specified Axes object.
 
         Parameters
         ----------
-        ax : matplotlib.axes.Axes
+        ax : Optional[Union[Axes, Axes3D]]
             Axes object on which to draw the system.
         x : np.ndarray, shape=(n,)
             Current state of the system.
