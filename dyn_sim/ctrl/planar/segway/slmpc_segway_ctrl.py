@@ -81,6 +81,7 @@ class SLMPCSegwayController(SLMPC):
             The control input about which to linearize.
         """
         if self._mem.initialized:
+            assert self._u_mem is not None
             return self._u_mem[-1]
         else:
             return np.array([0.0])

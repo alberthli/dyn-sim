@@ -89,6 +89,7 @@ def u_ref(t: float, x: np.ndarray, slmpc: SLMPC) -> Union[np.ndarray, gp.MVar]:
         if not mem.initialized:
             return np.array([slmpc._sys._mass * g, 0, 0, 0])
         else:
+            assert slmpc._u_mem is not None
             return slmpc._u_mem[-1, :]
 
     # not first interval
