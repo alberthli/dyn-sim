@@ -86,8 +86,8 @@ class BWLC(MemoryController):
 
         Returns
         -------
-        t : float
-            Last remembered time.
+        t : Union[float, np.ndarray], shape=(1,) OR (T,)
+            Time memory.
         """
         if isinstance(self._mem, FullMemory):
             return np.array(self._mem.t_mem)
@@ -102,8 +102,8 @@ class BWLC(MemoryController):
 
         Returns
         -------
-        u : np.ndarray, shape=(m,)
-            Last remembered control input.
+        u : np.ndarray, shape=(m,) OR (T, m)
+            Control memory.
         """
         if isinstance(self._mem, FullMemory):
             return np.array(self._mem.u_mem)
