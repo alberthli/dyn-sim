@@ -110,23 +110,15 @@ class SimulationEnvironment:
         xlim, ylim, zlim = lims
 
         self._fig = plt.figure()
-        if self._sys._is3d:
-            self._ax = Axes3D(self._fig)
-            self._ax.set_proj_type("ortho")
-            self._ax.grid(False)
-            self._ax.set_xticks([])
-            self._ax.set_yticks([])
-            self._ax.set_zticks([])
-            self._ax.set_xlim3d(xlim)
-            self._ax.set_ylim3d(ylim)
-            self._ax.set_zlim3d(zlim)
-        else:
-            self._ax = Axes(self._fig)
-            self._ax.grid(False)
-            self._ax.set_xticks([])
-            self._ax.set_yticks([])
-            self._ax.set_xlim3d(xlim)
-            self._ax.set_ylim3d(ylim)
+        self._ax = Axes3D(self._fig)
+        self._ax.set_proj_type("ortho")
+        self._ax.grid(False)
+        self._ax.set_xticks([])
+        self._ax.set_yticks([])
+        self._ax.set_zticks([])
+        self._ax.set_xlim3d(xlim)
+        self._ax.set_ylim3d(ylim)
+        self._ax.set_zlim3d(zlim)
 
         def _clear_frame() -> None:
             """Clear the environment frame."""
