@@ -89,7 +89,7 @@ class Segway(CtrlAffineSystem):
 
         # unpacking variables
         m0 = self._m0
-        m = self._m
+        m = self._mass
         L = self._L
         J0 = self._J0
         bt = self._bt
@@ -135,7 +135,7 @@ class Segway(CtrlAffineSystem):
 
         # unpacking variables
         m0 = self._m0
-        m = self._m
+        m = self._mass
         L = self._L
         J0 = self._J0
         Km = self._Km
@@ -177,7 +177,7 @@ class Segway(CtrlAffineSystem):
 
         # unpacking variables
         m0 = self._m0
-        m = self._m
+        m = self._mass
         L = self._L
         J0 = self._J0
         Km = self._Km
@@ -286,7 +286,7 @@ class Segway(CtrlAffineSystem):
 
         # unpacking variables
         m0 = self._m0
-        m = self._m
+        m = self._mass
         L = self._L
         J0 = self._J0
         Km = self._Km
