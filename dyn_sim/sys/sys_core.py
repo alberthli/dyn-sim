@@ -77,7 +77,7 @@ class System(ABC):
 
         Returns
         -------
-        _B : np.ndarray, shape=(n, n)
+        _B : np.ndarray, shape=(n, m)
             Linearized control dynamics about (x, u).
         """
 
