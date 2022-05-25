@@ -104,18 +104,34 @@ class SimulationEnvironment:
         anim_name : str, default=None
             Name for animation file. If not None, saves an mp4. Else, doesn't save.
         """
-        xlim, ylim, zlim = lims
+        (
+            xlim,
+            ylim,
+            zlim,
+        ) = lims  # for 2D animations, still need to pass in a zlim (though it is now unused)
 
         self._fig = plt.figure()
-        self._ax = p3.Axes3D(self._fig)
-        self._ax.set_proj_type("ortho")
-        self._ax.grid(False)
-        self._ax.set_xticks([])
-        self._ax.set_yticks([])
-        self._ax.set_zticks([])
-        self._ax.set_xlim3d(xlim)
-        self._ax.set_ylim3d(ylim)
-        self._ax.set_zlim3d(zlim)
+        if self._sys._is3d:
+            self._ax = p3.Axes3D(self._fig)
+            self._ax.set_proj_type("ortho")
+            self._ax.grid(False)
+            self._ax.set_xticks([])
+            self._ax.set_yticks([])
+            self._ax.set_zticks([])
+            self._ax.set_xlim3d(xlim)
+            self._ax.set_ylim3d(ylim)
+            self._ax.set_zlim3d(zlim)
+        else:
+            raise NotImplementedError  # [TODO] fix 2D animations
+            # self._ax = plt.Axes(
+            #     self._fig, [0, 0, self._fig.get_figwidth(), self._fig.get_figheight()]
+            # )
+            # self._ax = plt.Axes(self._fig, [0, 0, 1, 1])
+            # self._ax.grid(False)
+            # self._ax.set_xticks([])
+            # self._ax.set_yticks([])
+            # self._ax.set_xlim(xlim)
+            # self._ax.set_ylim(ylim)
 
         def _clear_frame() -> None:
             """Clear the environment frame."""

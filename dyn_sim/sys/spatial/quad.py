@@ -224,7 +224,7 @@ class Quadrotor(CtrlAffineSystem):
 
         Parameters
         ----------
-        t : float,
+        t : float
             Time. Unused, included for API compliance.
         s : np.ndarray, shape=(12,)
             State of quadrotor.
@@ -411,7 +411,7 @@ class Quadrotor(CtrlAffineSystem):
         Returns
         -------
         _A : np.ndarray, shape=(12, 12)
-            Linearized autonomous dynamics about s.
+            Linearized autonomous dynamics about (s, u).
         """
         assert s.shape == (12,)
 
@@ -509,7 +509,7 @@ class Quadrotor(CtrlAffineSystem):
 
         Returns
         -------
-        _B : np.ndarray, shape=(12, 12)
+        _B : np.ndarray, shape=(12, 4)
             Linearized control dynamics about s.
         """
         m = self._mass
