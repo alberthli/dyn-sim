@@ -58,7 +58,7 @@ class MemoryController(Controller):
 class BWLC(MemoryController):
     """Abstract class for bandwidth-limited controllers (BWLCs)."""
 
-    def __init__(self, sys: System, wc: float) -> None:
+    def __init__(self, sys: System, wc: float, print_t: bool = False) -> None:
         """Initialize a BWLC.
 
         Parameters
@@ -67,11 +67,14 @@ class BWLC(MemoryController):
             Dynamical system to be controlled.
         wc : float
             The control frequency (Hz).
+        print_t : bool
+            Flag indicating whether to print time of control computation.
         """
         super(BWLC, self).__init__(sys)
         self._wc = wc
         self._dt = 1.0 / wc  # convenience dt for given wc
         self._mem: BWLCMemory = BWLCMemory()
+        self._print_t = print_t
 
     @property
     def _t_last(self) -> float:
@@ -155,6 +158,8 @@ class BWLC(MemoryController):
             self._mem.rem_t(self._t_last + self._dt)
             self._mem.rem_x(x)
             self._mem.rem_u(self._ctrl_update(t, x))
+            if self._print_t:
+                print(t)
 
         return self._u_mem[-1]
 
@@ -165,17 +170,14 @@ class FullMemoryBWLC(BWLC):
     In particular, FullMemoryBWLCs store the entire time, state, and control history of the controller for the whole run.
     """
 
-    def __init__(self, sys: System, wc: float) -> None:
+    def __init__(self, sys: System, wc: float, print_t: bool = False) -> None:
         """Initialize a FullMemoryBWLC.
 
         Parameters
         ----------
-        sys : System
-            Dynamical system to be controlled.
-        wc : float
-            The control frequency (Hz).
+        See BWLC.
         """
-        super(FullMemoryBWLC, self).__init__(sys, wc)
+        super(FullMemoryBWLC, self).__init__(sys, wc, print_t=print_t)
         self._mem: FullMemory = FullMemory()
 
     @property

@@ -18,8 +18,8 @@ class SLMPC(FullMemoryBWLC):
     (2) fixed time discretization and planning horizon;
     (3) planning dynamics are locally-linearized from the exact model.
 
-    ToDos
-    ----
+    Future TODOs
+    ------------
     [1] Maybe abstract out the MPC framework slightly, since the major difference between MPC formulations is the form of the dynamics constraints.
     [2] ^ related to [1], separate out the constraint and cost calculation.
     """
@@ -35,6 +35,7 @@ class SLMPC(FullMemoryBWLC):
         x_ref: Callable[[float, np.ndarray, "SLMPC"], Union[np.ndarray, gp.MVar]],
         u_ref: Callable[[float, np.ndarray, "SLMPC"], Union[np.ndarray, gp.MVar]],
         mpc_h: Optional[float] = None,
+        print_t: bool = False,
     ) -> None:
         """Initialize a SLMPC.
 
@@ -62,14 +63,16 @@ class SLMPC(FullMemoryBWLC):
             See x_ref, same but for control input.
         mpc_h : Optional[float]
             The time-discretization (sec) of the MPC subproblem. By default assumed to be dt (see below).
+        print_t : bool
+            Flag indicating whether to print time of control computation.
         """
         if wc is None:
-            super(SLMPC, self).__init__(sys, 1)  # 1=dummy init
+            super(SLMPC, self).__init__(sys, 1, print_t=print_t)  # 1=dummy init
             self._wc = 0.0  # dummy value
             self._dt = 0.0
         else:
             assert wc > 0.0
-            super(SLMPC, self).__init__(sys, wc)
+            super(SLMPC, self).__init__(sys, wc, print_t=print_t)
         assert mpc_N > 0
         assert isinstance(mpc_N, int)
         assert mpc_Q.shape == (self._n, self._n)
@@ -141,7 +144,6 @@ class SLMPC(FullMemoryBWLC):
         """
         # bandwidth-limited
         if self._wc > 0.0:
-            print(t)  # [DEBUG]
             return super(SLMPC, self).ctrl(t, x)
         # non-bandwidth-limited
         else:
@@ -189,6 +191,10 @@ class SLMPC(FullMemoryBWLC):
                 u_now = u_var[i - 1, :]
                 self._gpmodel.addConstr(x_next == Ak @ x_now + Bk @ u_now + Ck)
 
+        # adding problem-specific constraints (must be implemented)
+        self._state_constrs()
+        self._input_constrs()
+
         # constructing the cost function
         cost_terms = []
         for i in range(N):
@@ -224,10 +230,21 @@ class SLMPC(FullMemoryBWLC):
 
         # solving the subproblem
         self._gpmodel.optimize()
-        u = u_var[0, :].X.flatten()  # [TODO] add a try/catch block for infeas
+        if self._gpmodel.Status in [3, 4, 5]:
+            raise RuntimeError("Infeasible or unbounded subproblem!")
+        else:
+            u = u_var[0, :].X.flatten()
         self._reset_gpmodel()
 
         return u
+
+    @abstractmethod
+    def _state_constrs(self) -> None:
+        """Adds constraint to each state in planning subproblem."""
+
+    @abstractmethod
+    def _input_constrs(self) -> None:
+        """Adds constraint to each input in planning subproblem."""
 
     @abstractmethod
     def _compute_ubar(self, x: np.ndarray) -> np.ndarray:

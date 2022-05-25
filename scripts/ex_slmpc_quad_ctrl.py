@@ -14,22 +14,31 @@ from dyn_sim.sys.spatial.quad import Quadrotor  # noqa: E402
 # CONSTANTS #
 g = 9.80665  # gravitational acceleration
 
+# ######### #
 # QUADROTOR #
+# ######### #
 m = 1.0  # mass
 I = np.array([1.0, 1.0, 1.0])  # principal moments of inertia
 kf = 1.0  # thrust factor
 km = 1.0  # drag factor
 l = 0.1  # rotor arm length
-Jtp = None  # Optional: total rot moment about prop axes (gyro)
+
+# Optional: total rot moment about prop axes (gyro).
+Jtp = 10.0  # [note] essentially induces a nonlinear disturbance
 
 quad = Quadrotor(m, I, kf, km, l, Jtp)
 
+# ########## #
 # CONTROLLER #
-wc = 10  # control frequency (Hz)
-mpc_N = 5  # planning horizon
-mpc_P = np.diag([12, 12, 12, 1, 1, 1, 2, 2, 2, 1, 1, 1])
+# ########## #
+wc = 5  # control frequency (Hz)
+mpc_N = 4  # planning horizon
+mpc_P = np.diag([12, 12, 12, 1, 1, 1, 2, 2, 2, 1, 1, 1])  # LQ cost weights
 mpc_Q = mpc_P
 mpc_R = np.diag([0.01, 0.01, 0.01, 0.01])
+v_safe = 0.75  # safe velocity (m/s)
+ang_safe = 0.5  # safe angular tilt (rad)
+print_t = True  # [DEBUG] prints computation times
 
 
 def x_ref(t: float, x: np.ndarray, slmpc: SLMPC) -> Union[np.ndarray, gp.MVar]:
@@ -50,9 +59,10 @@ def x_ref(t: float, x: np.ndarray, slmpc: SLMPC) -> Union[np.ndarray, gp.MVar]:
         State reference at time t.
     """
     _ref = np.zeros(12)
-    _ref[0:3] = np.array([np.cos(0.2 * t), np.sin(0.2 * t), 0.0])
+    radius = 0.5
+    _ref[0:3] = np.array([np.cos(radius * t), np.sin(radius * t), 0.0])
     _ref[6:9] = quad.Rwb(np.zeros(3)).T @ np.array(
-        [-0.2 * np.sin(0.2 * t), 0.2 * np.cos(0.2 * t), 0.0]
+        [-radius * np.sin(radius * t), radius * np.cos(radius * t), 0.0]
     )
     return _ref
 
@@ -98,9 +108,14 @@ slmpc = SLMPCQuadController(
     mpc_R,
     x_ref,
     u_ref,
+    v_safe=v_safe,
+    ang_safe=ang_safe,
+    print_t=print_t,
 )
 
+# ###################### #
 # SIMULATION ENVIRONMENT #
+# ###################### #
 simulator = SimulationEnvironment(quad, slmpc)
 
 if __name__ == "__main__":
