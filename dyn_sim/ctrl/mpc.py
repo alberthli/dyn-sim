@@ -1,3 +1,4 @@
+import warnings
 from abc import abstractmethod
 from typing import Callable, Optional, Union
 
@@ -61,15 +62,16 @@ class SLMPC(FullMemoryBWLC):
             [float, np.ndarray, "SLMPC"], Union[np.ndarray, gp.MVar]
         ]
             See x_ref, same but for control input.
-        mpc_h : Optional[float]
+        mpc_h : Optional[float], default=None
             The time-discretization (sec) of the MPC subproblem. By default assumed to be dt (see below).
-        print_t : bool
+        print_t : bool, default=False
             Flag indicating whether to print time of control computation.
         """
         if wc is None:
             super(SLMPC, self).__init__(sys, 1, print_t=print_t)  # 1=dummy init
             self._wc = 0.0  # dummy value
             self._dt = 0.0
+            warnings.warn("MPC running without bandwith limitations!", UserWarning)
         else:
             assert wc > 0.0
             super(SLMPC, self).__init__(sys, wc, print_t=print_t)
@@ -235,6 +237,10 @@ class SLMPC(FullMemoryBWLC):
         else:
             u = u_var[0, :].X
         self._reset_gpmodel()
+
+        # non-bandwidth-limited mode with time printing
+        if self._wc == 0.0 and self._print_t:
+            print(t)
 
         return u
 

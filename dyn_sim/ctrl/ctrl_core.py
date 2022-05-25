@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 
@@ -47,7 +47,12 @@ class MemoryController(Controller):
     _mem: MemoryBank = NotImplemented  # required MemoryBank attribute
 
     def __init__(self, sys: System) -> None:
-        """Initialize a memory controller."""
+        """Initialize a memory controller.
+
+        Parameters
+        ----------
+        See Controller.
+        """
         super(MemoryController, self).__init__(sys)
 
     def reset(self) -> None:
@@ -77,38 +82,54 @@ class BWLC(MemoryController):
         self._print_t = print_t
 
     @property
-    def _t_last(self) -> float:
-        return self._mem.t_mem[-1]
+    def _t_last(self) -> Optional[float]:
+        """Return the last time.
+
+        Returns
+        -------
+        t_last : Optional[float]
+            Last computation time.
+        """
+        if self._mem.initialized:
+            return self._mem.t_mem[-1]
+        else:
+            return None
 
     @property
-    def _t_mem(self) -> Union[float, np.ndarray]:
+    def _t_mem(self) -> Union[Optional[float], np.ndarray]:
         """Get time memory.
 
         Returns
         -------
-        t : Union[float, np.ndarray], shape=(1,) OR (T,)
+        t : Union[Optional[float], np.ndarray], shape=(1,) OR (T,)
             Time memory.
         """
         if isinstance(self._mem, FullMemory):
             return np.array(self._mem.t_mem)
         elif isinstance(self._mem, BWLCMemory):
-            return self._mem.t_mem[-1]
+            if self._mem.initialized:
+                return self._mem.t_mem[-1]
+            else:
+                return None
         else:
             raise NotImplementedError
 
     @property
-    def _u_mem(self) -> np.ndarray:
+    def _u_mem(self) -> Optional[np.ndarray]:
         """Get control memory.
 
         Returns
         -------
-        u : np.ndarray, shape=(m,) OR (T, m)
+        u : Optional[np.ndarray], shape=(m,) OR (T, m)
             Control memory.
         """
         if isinstance(self._mem, FullMemory):
             return np.array(self._mem.u_mem)
         elif isinstance(self._mem, BWLCMemory):
-            return self._mem.u_mem[-1]
+            if self._mem.initialized:
+                return self._mem.u_mem[-1]
+            else:
+                return None
         else:
             raise NotImplementedError
 
@@ -151,17 +172,21 @@ class BWLC(MemoryController):
             self._mem.rem_t(t)
             self._mem.rem_x(x)
             self._mem.rem_u(self._ctrl_update(t, x))
-            return self._u_mem[-1]
 
         # control update if enough time has elapsed
-        elif (t - self._t_last) > self._dt:
-            self._mem.rem_t(self._t_last + self._dt)
-            self._mem.rem_x(x)
-            self._mem.rem_u(self._ctrl_update(t, x))
-            if self._print_t:
-                print(t)
+        else:
+            t_last = self._t_last
+            assert t_last is not None
+            if (t - t_last) > self._dt:
+                self._mem.rem_t(t_last + self._dt)
+                self._mem.rem_x(x)
+                self._mem.rem_u(self._ctrl_update(t, x))
+                if self._print_t:
+                    print(t)
 
-        return self._u_mem[-1]
+        u_mem = self._u_mem
+        assert u_mem is not None
+        return u_mem[-1]
 
 
 class FullMemoryBWLC(BWLC):

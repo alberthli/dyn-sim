@@ -84,7 +84,7 @@ def u_ref(t: float, x: np.ndarray, slmpc: SLMPC) -> Union[np.ndarray, gp.MVar]:
     t0 = slmpc._t_last
 
     # first interval
-    if t < t0 + h:
+    if t0 is None or t < t0 + h:
         if not mem.initialized:
             return np.array([slmpc._sys._mass * g, 0, 0, 0])
         else:
