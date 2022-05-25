@@ -70,7 +70,8 @@ class SLMPC(FullMemoryBWLC):
         if wc is None:
             super(SLMPC, self).__init__(sys, 1, print_t=print_t)  # 1=dummy init
             self._wc = 0.0  # dummy value
-            self._dt = 0.0
+            assert mpc_h is not None
+            self._dt = mpc_h
             warnings.warn("MPC running without bandwith limitations!", UserWarning)
         else:
             assert wc > 0.0

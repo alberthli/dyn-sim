@@ -36,6 +36,7 @@ mpc_N = 4  # planning horizon
 mpc_P = np.diag([12, 12, 12, 1, 1, 1, 2, 2, 2, 1, 1, 1])  # LQ cost weights
 mpc_Q = mpc_P
 mpc_R = np.diag([0.01, 0.01, 0.01, 0.01])
+mpc_h = None
 v_safe = 0.75  # safe velocity (m/s)
 ang_safe = 0.5  # safe angular tilt (rad)
 print_t = True  # [DEBUG] prints computation times
@@ -108,6 +109,7 @@ slmpc = SLMPCQuadController(
     mpc_R,
     x_ref,
     u_ref,
+    mpc_h=mpc_h,
     v_safe=v_safe,
     ang_safe=ang_safe,
     print_t=print_t,
