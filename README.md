@@ -1,8 +1,6 @@
 # Dynamical Simulation Environment
 
 ## TODOs
-- [x] Dynamical Systems
-	- [x] Segway
 - [] Controllers
 	- [] General API for constraints (pick optimizer)
 	- [] MPC via successive linearization
