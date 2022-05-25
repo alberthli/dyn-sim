@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib.axes import Axes
 
-from dyn_sim.sys.dyn_sys import CtrlAffineSystem
+from dyn_sim.sys.sys_core import CtrlAffineSystem
 from dyn_sim.util.sim_utils import draw_circle
 
 # constants

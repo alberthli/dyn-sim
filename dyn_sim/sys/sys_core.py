@@ -48,6 +48,40 @@ class System(ABC):
         """
 
     @abstractmethod
+    def A(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+        """Linearized autonomous dynamics about (x, u).
+
+        Parameters
+        ----------
+        x : np.ndarray, shape=(n,)
+            State.
+        u : np.ndarray, shape=(m,)
+            Control input.
+
+        Returns
+        -------
+        _A : np.ndarray, shape=(n, n)
+            Linearized autonomous dynamics about (x, u).
+        """
+
+    @abstractmethod
+    def B(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+        """Linearized control dynamics about (x, u).
+
+        Parameters
+        ----------
+        x : np.ndarray, shape=(n,)
+            State.
+        u : np.ndarray, shape=(m,)
+            Control input.
+
+        Returns
+        -------
+        _B : np.ndarray, shape=(n, m)
+            Linearized control dynamics about (x, u).
+        """
+
+    @abstractmethod
     def draw(self, ax: Axes, x: np.ndarray) -> None:
         """Draw the current state on the specified Axes object.
 

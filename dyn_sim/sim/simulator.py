@@ -1,13 +1,15 @@
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Union
 
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.pyplot import Figure
+from mpl_toolkits.mplot3d.axes3d import Axes3D
 from scipy.integrate import solve_ivp
 
-from dyn_sim.ctrl.ctrl import Controller
-from dyn_sim.sys.dyn_sys import System
+from dyn_sim.ctrl.ctrl_core import Controller, MemoryController
+from dyn_sim.sys.sys_core import System
 
 
 class SimulationEnvironment:
@@ -26,8 +28,8 @@ class SimulationEnvironment:
         self._sys = sys
         self._ctrler = ctrler
 
-        self._fig = None
-        self._ax = None
+        self._fig: Optional[Figure] = None
+        self._ax: Optional[Union[Axes, Axes3D]] = None
 
     def simulate(
         self,
@@ -35,7 +37,7 @@ class SimulationEnvironment:
         tsim: np.ndarray,
         dfunc: Optional[Callable[[float, np.ndarray], np.ndarray]] = None,
         max_step: float = 0.01,
-    ) -> np.ndarray:
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Simulate the system.
 
         Parameters
@@ -77,7 +79,8 @@ class SimulationEnvironment:
         t_sol = sol.t
         x_sol = sol.y
 
-        self._ctrler.reset()
+        if isinstance(self._ctrler, MemoryController):
+            self._ctrler.reset()
 
         return t_sol, x_sol
 
@@ -87,7 +90,7 @@ class SimulationEnvironment:
         x_sol: np.ndarray,
         lims: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]],
         fps: float = 10.0,
-        anim_name: str = None,
+        anim_name: Optional[str] = None,
     ) -> None:
         """Animate a simulated result.
 
@@ -112,7 +115,7 @@ class SimulationEnvironment:
 
         self._fig = plt.figure()
         if self._sys._is3d:
-            self._ax = p3.Axes3D(self._fig)
+            self._ax = Axes3D(self._fig)
             self._ax.set_proj_type("ortho")
             self._ax.grid(False)
             self._ax.set_xticks([])
@@ -156,6 +159,9 @@ class SimulationEnvironment:
         plt.show()
         _clear_frame()
 
+    # ###################################### #
+    # KEEP FOR NOW WHILE REFACTOR IS ONGOING #
+    # ###################################### #
     # def simulate(
     #     self,
     #     s0: np.ndarray,

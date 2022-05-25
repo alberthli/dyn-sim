@@ -1,7 +1,9 @@
+from typing import Optional
+
 import numpy as np
 from matplotlib.axes import Axes
 
-from dyn_sim.sys.dyn_sys import CtrlAffineSystem
+from dyn_sim.sys.sys_core import CtrlAffineSystem
 from dyn_sim.util.sim_utils import draw_circle
 
 # constants
@@ -59,7 +61,7 @@ class Quadrotor(CtrlAffineSystem):
         kf: float,
         km: float,
         l: float,
-        Jtp: float = None,
+        Jtp: Optional[float] = None,
     ) -> None:
         """Initialize a quadrotor.
 
@@ -510,7 +512,7 @@ class Quadrotor(CtrlAffineSystem):
         Returns
         -------
         _B : np.ndarray, shape=(12, 4)
-            Linearized control dynamics about s.
+            Linearized control dynamics about (s, u).
         """
         m = self._mass
         Ix, Iy, Iz = self._I
