@@ -14,7 +14,10 @@ from dyn_sim.sys.planar.segway import Segway  # noqa: E402
 seg = Segway()
 
 # FDBK LIN CONTROLLER #
-flc = FLPosRegSegwayController(seg, 0.0, 1.0, 1.0)
+p_star = 0.0  # desired position
+alpha1 = 1.0  # gains for feedback linearization
+alpha2 = 1.0
+flc = FLPosRegSegwayController(seg, p_star, alpha1, alpha2)
 
 # SIMULATION ENVIRONMENT #
 simulator = SimulationEnvironment(seg, flc)
