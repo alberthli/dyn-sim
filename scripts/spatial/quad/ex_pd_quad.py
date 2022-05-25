@@ -5,7 +5,7 @@ import numpy as np
 
 sys.path.append("..")
 
-from dyn_sim.ctrl.quad.pd_quad_ctrl import PDQuadController  # noqa: E402
+from dyn_sim.ctrl.spatial.quad.pd_quad_ctrl import PDQuadController  # noqa: E402
 from dyn_sim.sim.simulator import SimulationEnvironment  # noqa: E402
 from dyn_sim.sys.spatial.quad import Quadrotor  # noqa: E402
 
@@ -43,8 +43,10 @@ if __name__ == "__main__":
 
     # animating the solution
     fps = 20.0  # animation fps
-    xyz_lims = ((-2, 2), (-2, 2), (-2, 2))
-    simulator.animate(t_sol, x_sol, xyz_lims, fps=fps)
+    xlim = (-2, 2)
+    ylim = (-2, 2)
+    zlim = (-2, 2)
+    simulator.animate(t_sol, x_sol, xlim, ylim, zlim=zlim, fps=fps)
 
     # STATIC PLOTS #
 

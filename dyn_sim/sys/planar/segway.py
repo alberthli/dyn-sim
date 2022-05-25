@@ -36,27 +36,30 @@ class Segway(CtrlAffineSystem):
         bt: float = 2 * 1.225,
         l: float = 0.75,
         mass: float = 44.798,
+        phi0: float = 0.138,
     ) -> None:
         """Initialize a segway.
 
         Parameters
         ----------
-        m0 : float
-            Lumped mass of the segway.
-        L : float
-            Length between the center of rotation and center of gravity.
-        J0 : float
-            Lumped inertia of the segway.
-        Km : float
-            Motor Torque constant.
-        R : float
-            Wheel radius.
-        bt : float
-            Motor damping constant.
-        l : float
-            Length between center of rotation and tip of segway arm.
-        mass : float
-            Mass of upper segway arm (name spelled out to prevent collision).
+        m0 : float, default=52.71
+            Lumped mass (kg) of the segway.
+        L : float, default=0.169
+            Length (m) between the center of rotation and center of gravity.
+        J0 : float, default=5.108
+            Lumped inertia (kg*m^2) of the segway.
+        Km : float, default=(2 * 1.262)
+            Motor Torque constant (Nm / V).
+        R : float, default=0.195
+            Wheel radius (m).
+        bt : float, default=(2 * 1.225)
+            Motor damping constant (Ns).
+        l : float, default=0.75
+            Length (m) between center of rotation and tip of segway arm.
+        mass : float, default=44.798
+            Mass (kg) of upper segway arm (name spelled out to prevent collision).
+        phi0 : float, default=0.138
+            Equilibrium tilt (rad) of the segway.
 
         Default parameters retrieved from Molnar (2021), see Segway docstring for link.
         """
@@ -69,6 +72,7 @@ class Segway(CtrlAffineSystem):
         self._bt = bt
         self._l = l
         self._mass = mass
+        self._phi0 = phi0
 
     def fdyn(self, t: float, x: np.ndarray) -> np.ndarray:
         """Segway autonomous dynamics.
@@ -89,7 +93,7 @@ class Segway(CtrlAffineSystem):
 
         # unpacking variables
         m0 = self._m0
-        m = self._mass
+        mass = self._mass
         L = self._L
         J0 = self._J0
         bt = self._bt
@@ -101,14 +105,14 @@ class Segway(CtrlAffineSystem):
         cosphi = np.cos(phi)
 
         # inverse inertia matrix
-        denom = J0 * m0 - L**2 * m**2 * cosphi**2
-        Dinv = np.array([[J0, -m * L * cosphi], [-m * L * cosphi, m0]]) / denom
+        denom = J0 * m0 - L**2 * mass**2 * cosphi**2
+        Dinv = np.array([[J0, -mass * L * cosphi], [-mass * L * cosphi, m0]]) / denom
 
         # coriolis & gravity matrix
         H = np.array(
             [
-                -m * L * sinphi * dphi**2 + bt * (dp - R * dphi) / R,
-                -m * g * L * sinphi + bt * (dp - R * dphi),
+                -mass * L * sinphi * dphi**2 + bt * (dp - R * dphi) / R,
+                -mass * g * L * sinphi + bt * (dp - R * dphi),
             ]
         )
 
@@ -135,7 +139,7 @@ class Segway(CtrlAffineSystem):
 
         # unpacking variables
         m0 = self._m0
-        m = self._mass
+        mass = self._mass
         L = self._L
         J0 = self._J0
         Km = self._Km
@@ -147,8 +151,8 @@ class Segway(CtrlAffineSystem):
         cosphi = np.cos(phi)
 
         # inverse inertia matrix
-        denom = J0 * m0 - L**2 * m**2 * cosphi**2
-        Dinv = np.array([[J0, -m * L * cosphi], [-m * L * cosphi, m0]]) / denom
+        denom = J0 * m0 - L**2 * mass**2 * cosphi**2
+        Dinv = np.array([[J0, -mass * L * cosphi], [-mass * L * cosphi, m0]]) / denom
 
         # input matrix
         B = np.array([Km / R, -Km])
@@ -177,7 +181,7 @@ class Segway(CtrlAffineSystem):
 
         # unpacking variables
         m0 = self._m0
-        m = self._mass
+        mass = self._mass
         L = self._L
         J0 = self._J0
         Km = self._Km
@@ -190,41 +194,41 @@ class Segway(CtrlAffineSystem):
 
         # constructing A
         _A = np.zeros((self._n, self._n))
-        TERM1 = J0 * m0 - L**2 * m**2 * cphi**2
+        TERM1 = J0 * m0 - L**2 * mass**2 * cphi**2
         _A[1, 2] = -(
             L
-            * m
+            * mass
             * (
                 -J0 * cphi * dphi**2
                 - R * bt * sphi * dphi
                 + Km * u * sphi
                 + bt * dp * sphi
-                + L * g * m * (2 * cphi**2 - 1)
+                + L * g * mass * (2 * cphi**2 - 1)
             )
         ) / TERM1 - (
             2
             * L**2
-            * m**2
+            * mass**2
             * cphi
             * sphi
             * (
                 J0 * Km * u
                 - J0 * bt * dp
                 + J0 * R * bt * dphi
-                + L * R * bt * dp * m * cphi
-                - L**2 * R * g * m**2 * cphi * sphi
-                + J0 * L * R * dphi**2 * m * sphi
-                - L * R**2 * bt * dphi * m * cphi
-                + Km * L * R * m * u * cphi
+                + L * R * bt * dp * mass * cphi
+                - L**2 * R * g * mass**2 * cphi * sphi
+                + J0 * L * R * dphi**2 * mass * sphi
+                - L * R**2 * bt * dphi * mass * cphi
+                + Km * L * R * mass * u * cphi
             )
         ) / (
             R * TERM1**2
         )
         _A[1, 3] = (
             L
-            * m
+            * mass
             * (
-                -L * R * m * (2 * cphi**2 - 1) * dphi**2
+                -L * R * mass * (2 * cphi**2 - 1) * dphi**2
                 + R * bt * sphi * dphi
                 + Km * u * sphi
                 - bt * dp * sphi
@@ -233,33 +237,33 @@ class Segway(CtrlAffineSystem):
         ) / (R * TERM1) + (
             2
             * L**2
-            * m**2
+            * mass**2
             * cphi
             * sphi
             * (
                 Km * R * m0 * u
                 - R**2 * bt * dphi * m0
                 + R * bt * dp * m0
-                + Km * L * m * u * cphi
-                - L * bt * dp * m * cphi
-                + L * R * bt * dphi * m * cphi
-                - L * R * g * m * m0 * sphi
-                + L**2 * R * dphi**2 * m**2 * cphi * sphi
+                + Km * L * mass * u * cphi
+                - L * bt * dp * mass * cphi
+                + L * R * bt * dphi * mass * cphi
+                - L * R * g * mass * m0 * sphi
+                + L**2 * R * dphi**2 * mass**2 * cphi * sphi
             )
         ) / (
             R * TERM1**2
         )
         _A[2, 0] = 1
-        _A[2, 2] = -(bt * (J0 - L * R * m * cphi)) / (R * TERM1)
-        _A[2, 3] = -(bt * (R * m0 - L * m * cphi)) / (R * TERM1)
+        _A[2, 2] = -(bt * (J0 - L * R * mass * cphi)) / (R * TERM1)
+        _A[2, 3] = -(bt * (R * m0 - L * mass * cphi)) / (R * TERM1)
         _A[3, 1] = 1
         _A[3, 2] = (
-            J0 * bt - L * R * bt * m * cphi + 2 * J0 * L * dphi * m * sphi
+            J0 * bt - L * R * bt * mass * cphi + 2 * J0 * L * dphi * mass * sphi
         ) / TERM1
         _A[3, 3] = (
             -(
-                dphi * np.sin(2 * phi) * L**2 * m**2
-                + bt * cphi * L * m
+                dphi * np.sin(2 * phi) * L**2 * mass**2
+                + bt * cphi * L * mass
                 - R * bt * m0
             )
             / TERM1
@@ -286,7 +290,7 @@ class Segway(CtrlAffineSystem):
 
         # unpacking variables
         m0 = self._m0
-        m = self._mass
+        mass = self._mass
         L = self._L
         J0 = self._J0
         Km = self._Km
@@ -297,9 +301,9 @@ class Segway(CtrlAffineSystem):
 
         # constructing _B
         _B = np.zeros((self._n, self._m))
-        denom = R * (J0 * m0 - L**2 * m**2 * cphi**2)
-        _B[2] = Km * (J0 + L * R * m * cphi) / denom
-        _B[3] = -Km * (R * m0 + L * m * cphi) / denom
+        denom = R * (J0 * m0 - L**2 * mass**2 * cphi**2)
+        _B[2] = Km * (J0 + L * R * mass * cphi) / denom
+        _B[3] = -Km * (R * m0 + L * mass * cphi) / denom
         return _B
 
     def draw(self, ax: Axes, x: np.ndarray) -> None:
@@ -313,13 +317,14 @@ class Segway(CtrlAffineSystem):
             Current state of the segway.
         """
         assert x.shape == (4,)
+        assert ax.name == "rectilinear" or ax.name == "polar"
         p = x[0]
         phi = x[1]
-        sinphi = np.sin(phi)
-        cosphi = np.cos(phi)
+        sinphi = np.sin(phi + self._phi0)
+        cosphi = np.cos(phi + self._phi0)
 
-        pos0 = np.array([p, 0])
-        pos1 = np.array([p + self._l * sinphi, self._l * cosphi])
+        pos0 = np.array([p, self._R])
+        pos1 = np.array([p + self._l * sinphi, self._R + self._l * cosphi])
 
         # drawing segway wheel
         draw_circle(ax, pos0, self._R, color="green")

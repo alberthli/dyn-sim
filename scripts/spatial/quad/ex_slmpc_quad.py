@@ -89,6 +89,7 @@ def u_ref(t: float, x: np.ndarray, slmpc: SLMPC) -> Union[np.ndarray, gp.MVar]:
         if not mem.initialized:
             return np.array([slmpc._sys._mass * g, 0, 0, 0])
         else:
+            assert slmpc._u_mem is not None
             return slmpc._u_mem[-1, :]
 
     # not first interval
@@ -130,5 +131,7 @@ if __name__ == "__main__":
 
     # animating the solution
     fps = 20.0  # animation fps
-    xyz_lims = ((-2, 2), (-2, 2), (-2, 2))
-    simulator.animate(t_sol, x_sol, xyz_lims, fps=fps)
+    xlim = (-2, 2)
+    ylim = (-2, 2)
+    zlim = (-2, 2)
+    simulator.animate(t_sol, x_sol, xlim, ylim, zlim=zlim, fps=fps)
