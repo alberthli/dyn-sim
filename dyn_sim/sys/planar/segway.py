@@ -132,7 +132,7 @@ class Segway(CtrlAffineSystem):
 
         Returns
         -------
-        _gdyn : np.ndarray, shape=(4,)
+        _gdyn : np.ndarray, shape=(4, 1)
             Matrix representing affine control dynamics.
         """
         assert x.shape == (4,)
@@ -158,7 +158,7 @@ class Segway(CtrlAffineSystem):
         B = np.array([Km / R, -Km])
 
         DinvB = Dinv @ B
-        _gdyn = np.array([0, 0, DinvB[0], DinvB[1]])
+        _gdyn = np.array([[0, 0, DinvB[0], DinvB[1]]]).T
         return _gdyn
 
     def A(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
@@ -282,7 +282,7 @@ class Segway(CtrlAffineSystem):
 
         Returns
         -------
-        _B : np.ndarray, shape=(4,)
+        _B : np.ndarray, shape=(4, 1)
             Linearized control dynamics about (x, u).
         """
         assert x.shape == (4,)

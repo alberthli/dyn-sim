@@ -154,4 +154,4 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
         """See parent docstring."""
         assert x.shape == (self._n,)
         assert u.shape == (self._m,)
-        return self.fdyn(t, x) + self.gdyn(t, x) * u
+        return self.fdyn(t, x) + self.gdyn(t, x) @ u
