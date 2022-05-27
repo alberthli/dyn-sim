@@ -1,7 +1,9 @@
 from abc import ABC, ABCMeta, abstractmethod
+from functools import partial
 from typing import Optional, Union
 
 import numpy as np
+from jax import jacobian, jit
 from matplotlib.axes import Axes
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 
@@ -31,6 +33,7 @@ class System(ABC):
         self._is3d = is3d
 
     @abstractmethod
+    @partial(jit, static_argnums=(0,))
     def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Dynamics of the system.
 
@@ -49,12 +52,14 @@ class System(ABC):
             Time derivative of current state.
         """
 
-    @abstractmethod
-    def A(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    @partial(jit, static_argnums=(0,))
+    def A(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Linearized autonomous dynamics about (x, u).
 
         Parameters
         ----------
+        t : float
+            Time.
         x : np.ndarray, shape=(n,)
             State.
         u : np.ndarray, shape=(m,)
@@ -65,13 +70,18 @@ class System(ABC):
         _A : np.ndarray, shape=(n, n)
             Linearized autonomous dynamics about (x, u).
         """
+        dyn_jnp = lambda x, u: self.dyn(0, x, u)
+        _A = jacobian(dyn_jnp, argnums=0)(x, u)
+        return _A
 
-    @abstractmethod
-    def B(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    @partial(jit, static_argnums=(0,))
+    def B(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Linearized control dynamics about (x, u).
 
         Parameters
         ----------
+        t : float
+            Time.
         x : np.ndarray, shape=(n,)
             State.
         u : np.ndarray, shape=(m,)
@@ -82,6 +92,9 @@ class System(ABC):
         _B : np.ndarray, shape=(n, m)
             Linearized control dynamics about (x, u).
         """
+        dyn_jnp = lambda x, u: self.dyn(0, x, u)
+        _B = jacobian(dyn_jnp, argnums=1)(x, u)
+        return _B
 
     @abstractmethod
     def draw(self, ax: Optional[Union[Axes, Axes3D]], x: np.ndarray) -> None:
@@ -150,6 +163,7 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
             Value of the actuation matrix of the system.
         """
 
+    @partial(jit, static_argnums=(0,))
     def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
         """See parent docstring."""
         assert x.shape == (self._n,)

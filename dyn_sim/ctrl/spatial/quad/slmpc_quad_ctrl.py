@@ -115,4 +115,6 @@ class SLMPCQuadController(SLMPC):
         for i in range(N):
             ui = u_var[i, :]
             self._gpmodel.addConstr(ui[0] >= 0)  # thrust
-            self._gpmodel.addConstr(self._sys.invV @ ui >= 1e-3)  # rotor speed
+            self._gpmodel.addConstr(
+                np.array(self._sys.invV) @ ui >= 1e-3
+            )  # rotor speed

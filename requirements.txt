@@ -5,6 +5,8 @@ flake8==3.9.2
 flake8-docstrings==1.6.0
 gurobipy==9.5.0
 isort==5.10.1
+jax==0.3.13
+jaxlib==0.3.10
 kiwisolver==1.4.2
 matplotlib==3.5.2
 mypy==0.950

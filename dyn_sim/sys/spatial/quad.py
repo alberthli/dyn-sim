@@ -1,6 +1,9 @@
+from functools import partial
 from typing import Optional
 
+import jax.numpy as jnp
 import numpy as np
+from jax import jit
 from matplotlib.axes import Axes
 
 from dyn_sim.sys.sys_core import CtrlAffineSystem
@@ -101,6 +104,7 @@ class Quadrotor(CtrlAffineSystem):
         self._Jtp = Jtp
 
     @property
+    @partial(jit, static_argnums=(0,))
     def V(self) -> np.ndarray:
         """Matrix converting squared rotor speeds to virtual forces/moments.
 
@@ -114,7 +118,7 @@ class Quadrotor(CtrlAffineSystem):
         km = self._km
         l = self._l
 
-        _V = np.array(
+        _V = jnp.array(
             [
                 [kf, kf, kf, kf],
                 [0.0, -kf * l, 0.0, kf * l],
@@ -126,6 +130,7 @@ class Quadrotor(CtrlAffineSystem):
         return _V
 
     @property
+    @partial(jit, static_argnums=(0,))
     def invV(self) -> np.ndarray:
         """Matrix converting virtual forces/moments to squared rotor speeds.
 
@@ -136,7 +141,7 @@ class Quadrotor(CtrlAffineSystem):
         l = self._l
 
         _invV = (
-            np.array(
+            jnp.array(
                 [
                     [1.0 / kf, 0.0, -2.0 / (kf * l), -1.0 / km],
                     [1.0 / kf, -2.0 / (kf * l), 0.0, 1 / km],
@@ -149,6 +154,7 @@ class Quadrotor(CtrlAffineSystem):
 
         return _invV
 
+    @partial(jit, static_argnums=(0,))
     def Rwb(self, alpha: np.ndarray) -> np.ndarray:
         """Rotation matrix from BODY to WORLD frame (ZYX Euler).
 
@@ -165,14 +171,14 @@ class Quadrotor(CtrlAffineSystem):
         assert alpha.shape == (3,)
 
         phi, theta, psi = alpha
-        cphi = np.cos(phi)
-        cth = np.cos(theta)
-        cpsi = np.cos(psi)
-        sphi = np.sin(phi)
-        sth = np.sin(theta)
-        spsi = np.sin(psi)
+        cphi = jnp.cos(phi)
+        cth = jnp.cos(theta)
+        cpsi = jnp.cos(psi)
+        sphi = jnp.sin(phi)
+        sth = jnp.sin(theta)
+        spsi = jnp.sin(psi)
 
-        R = np.array(
+        R = jnp.array(
             [
                 [
                     cth * cpsi,  # row 1
@@ -190,6 +196,7 @@ class Quadrotor(CtrlAffineSystem):
 
         return R
 
+    @partial(jit, static_argnums=(0,))
     def Twb(self, alpha: np.ndarray) -> np.ndarray:
         """Angular velocity transformation matrix from BODY to WORLD frame (ZYX Euler).
 
@@ -206,12 +213,12 @@ class Quadrotor(CtrlAffineSystem):
         assert alpha.shape == (3,)
 
         phi, theta, _ = alpha
-        cphi = np.cos(phi)
-        cth = np.cos(theta)
-        sphi = np.sin(phi)
-        tth = np.tan(theta)
+        cphi = jnp.cos(phi)
+        cth = jnp.cos(theta)
+        sphi = jnp.sin(phi)
+        tth = jnp.tan(theta)
 
-        T = np.array(
+        T = jnp.array(
             [
                 [1.0, sphi * tth, cphi * tth],
                 [0.0, cphi, -sphi],
@@ -221,6 +228,7 @@ class Quadrotor(CtrlAffineSystem):
 
         return T
 
+    @partial(jit, static_argnums=(0,))
     def fdyn(self, t: float, s: np.ndarray) -> np.ndarray:
         """Quadrotor autonomous dynamics.
 
@@ -259,14 +267,14 @@ class Quadrotor(CtrlAffineSystem):
         p, q, r = dalpha_b
         phi, th, _ = alpha
 
-        ddo_b = np.array(
+        ddo_b = jnp.array(
             [
-                r * v - q * w + g * np.sin(th),
-                p * w - r * u - g * np.sin(phi) * np.cos(th),
-                q * u - p * v - g * np.cos(th) * np.cos(phi),
+                r * v - q * w + g * jnp.sin(th),
+                p * w - r * u - g * jnp.sin(phi) * jnp.cos(th),
+                q * u - p * v - g * jnp.cos(th) * jnp.cos(phi),
             ]
         )
-        ddalpha_b = np.array(
+        ddalpha_b = jnp.array(
             [
                 ((Iy - Iz) * q * r) / Ix,
                 ((Iz - Ix) * p * r) / Iy,
@@ -274,9 +282,10 @@ class Quadrotor(CtrlAffineSystem):
             ]
         )
 
-        _fdyn = np.hstack((do, dalpha, ddo_b, ddalpha_b))
+        _fdyn = jnp.hstack((do, dalpha, ddo_b, ddalpha_b))
         return _fdyn
 
+    @partial(jit, static_argnums=(0,))
     def gdyn(self, t: float, s: np.ndarray) -> np.ndarray:
         """Quadrotor control dynamics.
 
@@ -299,17 +308,22 @@ class Quadrotor(CtrlAffineSystem):
         Ix, Iy, Iz = self._I
 
         # accelerations
-        ddo_b = np.zeros((3, 4))
-        ddo_b[2, 0] = 1.0 / m
+        ddo_b = jnp.zeros((3, 4))
+        # ddo_b[2, 0] = 1.0 / m  # jax debug
+        ddo_b = ddo_b.at[2, 0].set(1.0 / m)
 
-        ddalpha_b = np.zeros((3, 4))
-        ddalpha_b[0, 1] = 1.0 / Ix
-        ddalpha_b[1, 2] = 1.0 / Iy
-        ddalpha_b[2, 3] = 1.0 / Iz
+        ddalpha_b = jnp.zeros((3, 4))
+        # ddalpha_b[0, 1] = 1.0 / Ix
+        # ddalpha_b[1, 2] = 1.0 / Iy
+        # ddalpha_b[2, 3] = 1.0 / Iz
+        ddalpha_b = ddalpha_b.at[0, 1].set(1.0 / Ix)
+        ddalpha_b = ddalpha_b.at[1, 2].set(1.0 / Iy)
+        ddalpha_b = ddalpha_b.at[2, 3].set(1.0 / Iz)
 
-        _gdyn = np.vstack((np.zeros((6, 4)), ddo_b, ddalpha_b))
+        _gdyn = jnp.vstack((jnp.zeros((6, 4)), ddo_b, ddalpha_b))
         return _gdyn
 
+    @partial(jit, static_argnums=(0,))
     def wdyn(self, t: float, d: np.ndarray) -> np.ndarray:
         """Quadrotor disturbance dynamics in BODY frame.
 
@@ -337,18 +351,19 @@ class Quadrotor(CtrlAffineSystem):
         fdx, fdy, fdz, taudx, taudy, taudz = d
 
         # accelerations
-        ddo_b = np.array([fdx / m, fdy / m, fdz / m])
-        ddalpha_b = np.array([taudx / Ix, taudy / Iy, taudy / Iz])
+        ddo_b = jnp.array([fdx / m, fdy / m, fdz / m])
+        ddalpha_b = jnp.array([taudx / Ix, taudy / Iy, taudy / Iz])
 
-        _wdyn = np.hstack((np.zeros(6), ddo_b, ddalpha_b))
+        _wdyn = jnp.hstack((jnp.zeros(6), ddo_b, ddalpha_b))
         return _wdyn
 
+    @partial(jit, static_argnums=(0,))
     def dyn(
         self,
         t: float,
         s: np.ndarray,
         u: np.ndarray,
-        d: np.ndarray = np.zeros(6),
+        d: np.ndarray = jnp.zeros(6),
     ) -> np.ndarray:
         """Quadrotor dynamics function.
 
@@ -360,7 +375,7 @@ class Quadrotor(CtrlAffineSystem):
             State of the quadrotor.
         u : np.ndarray, shape=(4,)
             Virtual input of the quadrotor.
-        d : np.ndarray, shape=(6,), default=np.zeros(6)
+        d : np.ndarray, shape=(6,), default=jnp.zeros(6)
             Disturbances to the quadrotor.
 
         Returns
@@ -375,7 +390,7 @@ class Quadrotor(CtrlAffineSystem):
         fdyn = self.fdyn(t, s)
         gdyn = self.gdyn(t, s)
         wdyn = self.wdyn(t, d)
-        ds_gyro = np.zeros(12)
+        ds_gyro = jnp.zeros(12)
 
         # check whether gyroscopic effects are modeled. Note: this is
         # functionally treated as a disturbance, since if it is directly
@@ -389,141 +404,20 @@ class Quadrotor(CtrlAffineSystem):
 
             wsq = self.invV @ u
             assert all(wsq >= 0.0)
-            w = np.sqrt(wsq)
-            w[0] *= -1
-            w[2] *= -1
-            Omega = np.sum(w)  # net prop speeds
+            w = jnp.sqrt(wsq)
+            # w[0] *= -1  # debug jax
+            # w[2] *= -1
+            w = w.at[0].set(w[0] * -1)
+            w = w.at[2].set(w[2] * -1)
+            Omega = jnp.sum(w)  # net prop speeds
 
-            ds_gyro[9] = -Jtp * q * Omega / Ix
-            ds_gyro[10] = Jtp * p * Omega / Iy
+            # ds_gyro[9] = -Jtp * q * Omega / Ix
+            # ds_gyro[10] = Jtp * p * Omega / Iy
+            ds_gyro = ds_gyro.at[9].set(-Jtp * q * Omega / Ix)
+            ds_gyro = ds_gyro.at[10].set(Jtp * p * Omega / Iy)
 
         ds = fdyn + gdyn @ u + wdyn + ds_gyro
         return ds
-
-    def A(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
-        """Linearized autonomous dynamics about (s, u).
-
-        Parameters
-        ----------
-        s : np.ndarray, shape=(12,)
-            State.
-        u : np.ndarray, shape=(4,)
-            Virtual input of the quadrotor. Unused, included for API compliance.
-
-        Returns
-        -------
-        _A : np.ndarray, shape=(12, 12)
-            Linearized autonomous dynamics about (s, u).
-        """
-        assert s.shape == (12,)
-
-        Ix, Iy, Iz = self._I
-
-        phi, theta, psi = s[3:6]
-        u, v, w = s[6:9]
-        p, q, r = s[9:12]
-
-        cphi = np.cos(phi)
-        cth = np.cos(theta)
-        cpsi = np.cos(psi)
-        sphi = np.sin(phi)
-        sth = np.sin(theta)
-        spsi = np.sin(psi)
-        tth = np.tan(theta)
-
-        _A = np.zeros((12, 12))
-
-        _A[0, 3:9] = np.array(
-            [
-                v * (sphi * spsi + cphi * cpsi * sth)
-                + w * (cphi * spsi - cpsi * sphi * sth),
-                w * cphi * cpsi * cth - u * cpsi * sth + v * cpsi * cth * sphi,
-                w * (cpsi * sphi - cphi * spsi * sth)
-                - v * (cphi * cpsi + sphi * spsi * sth)
-                - u * cth * spsi,
-                cpsi * cth,
-                cpsi * sphi * sth - cphi * spsi,
-                sphi * spsi + cphi * cpsi * sth,
-            ]
-        )
-        _A[1, 3:9] = np.array(
-            [
-                -v * (cpsi * sphi - cphi * spsi * sth)
-                - w * (cphi * cpsi + sphi * spsi * sth),
-                w * cphi * cth * spsi - u * spsi * sth + v * cth * sphi * spsi,
-                w * (sphi * spsi + cphi * cpsi * sth)
-                - v * (cphi * spsi - cpsi * sphi * sth)
-                + u * cpsi * cth,
-                cth * spsi,
-                cphi * cpsi + sphi * spsi * sth,
-                cphi * spsi * sth - cpsi * sphi,
-            ]
-        )
-        _A[2, 3:9] = np.array(
-            [
-                v * cphi * cth - w * cth * sphi,
-                -u * cth - w * cphi * sth - v * sphi * sth,
-                0.0,
-                -sth,
-                cth * sphi,
-                cphi * cth,
-            ]
-        )
-        _A[3, 3:5] = np.array(
-            [
-                q * cphi * tth - r * sphi * tth,
-                r * cphi * (tth**2.0 + 1.0) + q * sphi * (tth**2.0 + 1.0),
-            ]
-        )
-        _A[3, 9:12] = np.array([1.0, sphi * tth, cphi * tth])
-        _A[4, 3] = -r * cphi - q * sphi
-        _A[4, 10:12] = np.array([cphi, -sphi])
-        _A[5, 3:5] = np.array(
-            [
-                (q * cphi) / cth - (r * sphi) / cth,
-                (r * cphi * sth) / cth**2 + (q * sphi * sth) / cth**2,
-            ]
-        )
-        _A[5, 10:12] = np.array([sphi / cth, cphi / cth])
-        _A[6, 4] = g * cth
-        _A[6, 7:12] = np.array([r, -q, 0.0, -w, v])
-        _A[7, 3:12] = np.array(
-            [-g * cphi * cth, g * sphi * sth, 0.0, -r, 0.0, p, w, 0.0, -u]
-        )
-        _A[8, 3:12] = np.array(
-            [g * cth * sphi, g * cphi * sth, 0.0, q, -p, 0.0, -v, u, 0.0]
-        )
-        _A[9, 10:12] = np.array([(r * (Iy - Iz)) / Ix, (q * (Iy - Iz)) / Ix])
-        _A[10, 9:12] = np.array([-(r * (Ix - Iz)) / Iy, 0.0, -(p * (Ix - Iz)) / Iy])
-        _A[11, 9:11] = np.array([(q * (Ix - Iy)) / Iz, (p * (Ix - Iy)) / Iz])
-
-        return _A
-
-    def B(self, s: np.ndarray, u: np.ndarray) -> np.ndarray:
-        """Linearized control dynamics about (s, u).
-
-        Parameters
-        ----------
-        s : np.ndarray, shape=(12,)
-            State. Unused, included for API compliance.
-        u : np.ndarray, shape=(4,)
-            Virtual input of the quadrotor. Unused, included for API compliance.
-
-        Returns
-        -------
-        _B : np.ndarray, shape=(12, 4)
-            Linearized control dynamics about (s, u).
-        """
-        m = self._mass
-        Ix, Iy, Iz = self._I
-        _B = np.zeros((12, 4))
-
-        _B[8, 0] = 1.0 / m
-        _B[9, 1] = 1.0 / Ix
-        _B[10, 2] = 1.0 / Iy
-        _B[11, 3] = 1.0 / Iz
-
-        return _B
 
     def draw(self, ax: Axes, s: np.ndarray) -> None:
         """Draws the quadrotor on specified Axes.
@@ -542,7 +436,7 @@ class Quadrotor(CtrlAffineSystem):
         l = self._l
         o = s[0:3]  # x, y, z
         alpha = s[3:6]  # phi, theta, psi
-        Rwb = self.Rwb(alpha)
+        Rwb = np.array(self.Rwb(alpha))
 
         # rotor base locations on frame in inertial frame
         r1 = o + Rwb @ np.array([l, 0.0, 0.0])
