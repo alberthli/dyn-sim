@@ -70,10 +70,11 @@ class System(ABC):
         _A : np.ndarray, shape=(n, n)
             Linearized autonomous dynamics about (x, u).
         """
-        dyn_jnp = lambda x, u: self.dyn(0, x, u)
+        dyn_jnp = lambda x, u: self.dyn(t, x, u)
         _A = jacobian(dyn_jnp, argnums=0)(x, u)
         return _A
 
+    @property
     @partial(jit, static_argnums=(0,))
     def B(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Linearized control dynamics about (x, u).
@@ -92,7 +93,7 @@ class System(ABC):
         _B : np.ndarray, shape=(n, m)
             Linearized control dynamics about (x, u).
         """
-        dyn_jnp = lambda x, u: self.dyn(0, x, u)
+        dyn_jnp = lambda x, u: self.dyn(t, x, u)
         _B = jacobian(dyn_jnp, argnums=1)(x, u)
         return _B
 
