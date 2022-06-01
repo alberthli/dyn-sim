@@ -103,7 +103,7 @@ class Quadrotor(CtrlAffineSystem):
         self._Jtp = Jtp
 
     @jax_func
-    def V(self) -> np.ndarray:
+    def V(self) -> jnp.ndarray:
         """Matrix converting squared rotor speeds to virtual forces/moments.
 
         Controller design occurs using virtual force/torque inputs, but true
@@ -128,7 +128,7 @@ class Quadrotor(CtrlAffineSystem):
         return _V
 
     @jax_func
-    def invV(self) -> np.ndarray:
+    def invV(self) -> jnp.ndarray:
         """Matrix converting virtual forces/moments to squared rotor speeds.
 
         wsq = invV @ u
@@ -152,7 +152,7 @@ class Quadrotor(CtrlAffineSystem):
         return _invV
 
     @jax_func
-    def Rwb(self, alpha: np.ndarray) -> np.ndarray:
+    def Rwb(self, alpha: np.ndarray) -> jnp.ndarray:
         """Rotation matrix from BODY to WORLD frame (ZYX Euler).
 
         Parameters
@@ -162,7 +162,7 @@ class Quadrotor(CtrlAffineSystem):
 
         Returns
         -------
-        R : np.ndarray, shape=(3, 3)
+        R : jnp.ndarray, shape=(3, 3)
             Rotation matrix from BODY to WORLD frame.
         """
         assert alpha.shape == (3,)
@@ -194,7 +194,7 @@ class Quadrotor(CtrlAffineSystem):
         return R
 
     @jax_func
-    def Twb(self, alpha: np.ndarray) -> np.ndarray:
+    def Twb(self, alpha: np.ndarray) -> jnp.ndarray:
         """Angular velocity transformation matrix from BODY to WORLD frame (ZYX Euler).
 
         Parameters
@@ -204,7 +204,7 @@ class Quadrotor(CtrlAffineSystem):
 
         Returns
         -------
-        T : np.ndarray, shape=(3, 3)
+        T : jnp.ndarray, shape=(3, 3)
             Angular velocity transformation matrix from BODY to WORLD frame.
         """
         assert alpha.shape == (3,)
@@ -226,7 +226,7 @@ class Quadrotor(CtrlAffineSystem):
         return T
 
     @jax_func
-    def fdyn(self, t: float, s: np.ndarray) -> np.ndarray:
+    def fdyn(self, t: float, s: np.ndarray) -> jnp.ndarray:
         """Quadrotor autonomous dynamics.
 
         Parameters
@@ -238,7 +238,7 @@ class Quadrotor(CtrlAffineSystem):
 
         Returns
         -------
-        _fdyn : np.ndarray, shape=(12,)
+        _fdyn : jnp.ndarray, shape=(12,)
             Time derivatives of states from autonomous dynamics.
         """
         assert s.shape == (12,)
@@ -283,7 +283,7 @@ class Quadrotor(CtrlAffineSystem):
         return _fdyn
 
     @jax_func
-    def gdyn(self, t: float, s: np.ndarray) -> np.ndarray:
+    def gdyn(self, t: float, s: np.ndarray) -> jnp.ndarray:
         """Quadrotor control dynamics.
 
         Parameters
@@ -295,7 +295,7 @@ class Quadrotor(CtrlAffineSystem):
 
         Returns
         -------
-        _gdyn : np.ndarray, shape=(12, 4)
+        _gdyn : jnp.ndarray, shape=(12, 4)
             Matrix representing affine control dynamics.
         """
         assert s.shape == (12,)
@@ -317,7 +317,7 @@ class Quadrotor(CtrlAffineSystem):
         return _gdyn
 
     @jax_func
-    def wdyn(self, t: float, d: np.ndarray) -> np.ndarray:
+    def wdyn(self, t: float, d: np.ndarray) -> jnp.ndarray:
         """Quadrotor disturbance dynamics in BODY frame.
 
         Global disturbances must first be rotated into the body frame!
@@ -331,7 +331,7 @@ class Quadrotor(CtrlAffineSystem):
 
         Returns
         -------
-        w : np.ndarray, shape=(12,)
+        w : jnp.ndarray, shape=(12,)
             Time derivatives of states from disturbance dynamics
         """
         assert d.shape == (6,)
@@ -357,7 +357,7 @@ class Quadrotor(CtrlAffineSystem):
         s: np.ndarray,
         u: np.ndarray,
         d: np.ndarray = jnp.zeros(6),
-    ) -> np.ndarray:
+    ) -> jnp.ndarray:
         """Quadrotor dynamics function.
 
         Parameters
@@ -373,7 +373,7 @@ class Quadrotor(CtrlAffineSystem):
 
         Returns
         -------
-        ds : np.ndarray, shape=(12,)
+        ds : jnp.ndarray, shape=(12,)
             Time derivative of the states.
         """
         assert s.shape == (12,)
