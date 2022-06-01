@@ -306,13 +306,9 @@ class Quadrotor(CtrlAffineSystem):
 
         # accelerations
         ddo_b = jnp.zeros((3, 4))
-        # ddo_b[2, 0] = 1.0 / m  # jax debug
         ddo_b = ddo_b.at[2, 0].set(1.0 / m)
 
         ddalpha_b = jnp.zeros((3, 4))
-        # ddalpha_b[0, 1] = 1.0 / Ix
-        # ddalpha_b[1, 2] = 1.0 / Iy
-        # ddalpha_b[2, 3] = 1.0 / Iz
         ddalpha_b = ddalpha_b.at[0, 1].set(1.0 / Ix)
         ddalpha_b = ddalpha_b.at[1, 2].set(1.0 / Iy)
         ddalpha_b = ddalpha_b.at[2, 3].set(1.0 / Iz)
@@ -402,14 +398,10 @@ class Quadrotor(CtrlAffineSystem):
             wsq = self.invV(np_out=False) @ u
             assert all(wsq >= 0.0)
             w = jnp.sqrt(wsq)
-            # w[0] *= -1  # debug jax
-            # w[2] *= -1
             w = w.at[0].set(w[0] * -1)
             w = w.at[2].set(w[2] * -1)
             Omega = jnp.sum(w)  # net prop speeds
 
-            # ds_gyro[9] = -Jtp * q * Omega / Ix
-            # ds_gyro[10] = Jtp * p * Omega / Iy
             ds_gyro = ds_gyro.at[9].set(-Jtp * q * Omega / Ix)
             ds_gyro = ds_gyro.at[10].set(Jtp * p * Omega / Iy)
 
@@ -433,7 +425,7 @@ class Quadrotor(CtrlAffineSystem):
         l = self._l
         o = s[0:3]  # x, y, z
         alpha = s[3:6]  # phi, theta, psi
-        Rwb = np.array(self.Rwb(alpha))
+        Rwb = self.Rwb(alpha)
 
         # rotor base locations on frame in inertial frame
         r1 = o + Rwb @ np.array([l, 0.0, 0.0])
