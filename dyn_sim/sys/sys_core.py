@@ -1,6 +1,7 @@
 from abc import ABC, ABCMeta, abstractmethod
 from typing import Optional, Union
 
+import jax.numpy as jnp
 import numpy as np
 from jax import jacobian
 from matplotlib.axes import Axes
@@ -35,7 +36,7 @@ class System(ABC):
 
     @abstractmethod
     @jax_func
-    def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> jnp.ndarray:
         """Dynamics of the system.
 
         Parameters
@@ -49,12 +50,12 @@ class System(ABC):
 
         Returns
         -------
-        dx : np.ndarray, shape=(n,)
+        dx : jnp.ndarray, shape=(n,)
             Time derivative of current state.
         """
 
     @jax_func
-    def A(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    def A(self, t: float, x: np.ndarray, u: np.ndarray) -> jnp.ndarray:
         """Linearized autonomous dynamics about (x, u).
 
         Parameters
@@ -68,15 +69,15 @@ class System(ABC):
 
         Returns
         -------
-        _A : np.ndarray, shape=(n, n)
+        _A : jnp.ndarray, shape=(n, n)
             Linearized autonomous dynamics about (x, u).
         """
-        dyn_jnp = lambda x, u: self.dyn(t, x, u, np_out=False)
+        dyn_jnp = lambda _x, _u: self.dyn(t, _x, _u, np_out=False)
         _A = jacobian(dyn_jnp, argnums=0)(x, u)
         return _A
 
     @jax_func
-    def B(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    def B(self, t: float, x: np.ndarray, u: np.ndarray) -> jnp.ndarray:
         """Linearized control dynamics about (x, u).
 
         Parameters
@@ -90,10 +91,10 @@ class System(ABC):
 
         Returns
         -------
-        _B : np.ndarray, shape=(n, m)
+        _B : jnp.ndarray, shape=(n, m)
             Linearized control dynamics about (x, u).
         """
-        dyn_jnp = lambda x, u: self.dyn(t, x, u, np_out=False)
+        dyn_jnp = lambda _x, _u: self.dyn(t, _x, _u, np_out=False)
         _B = jacobian(dyn_jnp, argnums=1)(x, u)
         return _B
 
@@ -132,7 +133,7 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
 
     @abstractmethod
     @jax_func
-    def fdyn(self, t: float, x: np.ndarray) -> np.ndarray:
+    def fdyn(self, t: float, x: np.ndarray) -> jnp.ndarray:
         """Drift of the system.
 
         Parameters
@@ -144,13 +145,13 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
 
         Returns
         -------
-        f_val : np.ndarray, shape=(n,)
+        f_val : jnp.ndarray, shape=(n,)
             Value of the drift of the system.
         """
 
     @abstractmethod
     @jax_func
-    def gdyn(self, t: float, x: np.ndarray) -> np.ndarray:
+    def gdyn(self, t: float, x: np.ndarray) -> jnp.ndarray:
         """Actuation matrix.
 
         Parameters
@@ -162,12 +163,12 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
 
         Returns
         -------
-        g_val : np.ndarray, shape=(n, m)
+        g_val : jnp.ndarray, shape=(n, m)
             Value of the actuation matrix of the system.
         """
 
     @jax_func
-    def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> jnp.ndarray:
         """See parent docstring."""
         assert x.shape == (self._n,)
         assert u.shape == (self._m,)
