@@ -1,12 +1,11 @@
-from functools import partial
 from typing import Optional
 
 import jax.numpy as jnp
 import numpy as np
-from jax import jit
 from matplotlib.axes import Axes
 
 from dyn_sim.sys.sys_core import CtrlAffineSystem
+from dyn_sim.util.jax_utils import jax_func
 from dyn_sim.util.sim_utils import draw_circle
 
 # constants
@@ -103,8 +102,7 @@ class Quadrotor(CtrlAffineSystem):
         self._l = l
         self._Jtp = Jtp
 
-    @property
-    @partial(jit, static_argnums=(0,))
+    @jax_func
     def V(self) -> np.ndarray:
         """Matrix converting squared rotor speeds to virtual forces/moments.
 
@@ -129,8 +127,7 @@ class Quadrotor(CtrlAffineSystem):
 
         return _V
 
-    @property
-    @partial(jit, static_argnums=(0,))
+    @jax_func
     def invV(self) -> np.ndarray:
         """Matrix converting virtual forces/moments to squared rotor speeds.
 
@@ -154,7 +151,7 @@ class Quadrotor(CtrlAffineSystem):
 
         return _invV
 
-    @partial(jit, static_argnums=(0,))
+    @jax_func
     def Rwb(self, alpha: np.ndarray) -> np.ndarray:
         """Rotation matrix from BODY to WORLD frame (ZYX Euler).
 
@@ -196,7 +193,7 @@ class Quadrotor(CtrlAffineSystem):
 
         return R
 
-    @partial(jit, static_argnums=(0,))
+    @jax_func
     def Twb(self, alpha: np.ndarray) -> np.ndarray:
         """Angular velocity transformation matrix from BODY to WORLD frame (ZYX Euler).
 
@@ -228,7 +225,7 @@ class Quadrotor(CtrlAffineSystem):
 
         return T
 
-    @partial(jit, static_argnums=(0,))
+    @jax_func
     def fdyn(self, t: float, s: np.ndarray) -> np.ndarray:
         """Quadrotor autonomous dynamics.
 
@@ -255,8 +252,8 @@ class Quadrotor(CtrlAffineSystem):
         Ix, Iy, Iz = self._I
 
         # body -> world transformations
-        Rwb = self.Rwb(alpha)
-        Twb = self.Twb(alpha)
+        Rwb = self.Rwb(alpha, np_out=False)
+        Twb = self.Twb(alpha, np_out=False)
 
         # velocities
         do = Rwb @ do_b
@@ -285,7 +282,7 @@ class Quadrotor(CtrlAffineSystem):
         _fdyn = jnp.hstack((do, dalpha, ddo_b, ddalpha_b))
         return _fdyn
 
-    @partial(jit, static_argnums=(0,))
+    @jax_func
     def gdyn(self, t: float, s: np.ndarray) -> np.ndarray:
         """Quadrotor control dynamics.
 
@@ -323,7 +320,7 @@ class Quadrotor(CtrlAffineSystem):
         _gdyn = jnp.vstack((jnp.zeros((6, 4)), ddo_b, ddalpha_b))
         return _gdyn
 
-    @partial(jit, static_argnums=(0,))
+    @jax_func
     def wdyn(self, t: float, d: np.ndarray) -> np.ndarray:
         """Quadrotor disturbance dynamics in BODY frame.
 
@@ -357,7 +354,7 @@ class Quadrotor(CtrlAffineSystem):
         _wdyn = jnp.hstack((jnp.zeros(6), ddo_b, ddalpha_b))
         return _wdyn
 
-    @partial(jit, static_argnums=(0,))
+    @jax_func
     def dyn(
         self,
         t: float,
@@ -387,9 +384,9 @@ class Quadrotor(CtrlAffineSystem):
         assert u.shape == (4,)
         assert d.shape == (6,)
 
-        fdyn = self.fdyn(t, s)
-        gdyn = self.gdyn(t, s)
-        wdyn = self.wdyn(t, d)
+        fdyn = self.fdyn(t, s, np_out=False)
+        gdyn = self.gdyn(t, s, np_out=False)
+        wdyn = self.wdyn(t, d, np_out=False)
         ds_gyro = jnp.zeros(12)
 
         # check whether gyroscopic effects are modeled. Note: this is
@@ -402,7 +399,7 @@ class Quadrotor(CtrlAffineSystem):
             p = s[9]
             q = s[10]
 
-            wsq = self.invV @ u
+            wsq = self.invV(np_out=False) @ u
             assert all(wsq >= 0.0)
             w = jnp.sqrt(wsq)
             # w[0] *= -1  # debug jax
