@@ -396,7 +396,7 @@ class Quadrotor(CtrlAffineSystem):
             q = s[10]
 
             wsq = self.invV(np_out=False) @ u
-            assert all(wsq >= 0.0)
+            assert jnp.all(wsq >= 0.0)
             w = jnp.sqrt(wsq)
             w = w.at[0].set(w[0] * -1)
             w = w.at[2].set(w[2] * -1)
