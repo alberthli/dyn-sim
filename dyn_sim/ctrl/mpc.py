@@ -178,9 +178,12 @@ class SLMPC(FullMemoryBWLC):
         feq = self._sys.dyn(t, x, ubar)  # offset for Taylor expansion
 
         # discrete-time linearized dynamics
-        Ak = np.array(np.eye(n) + h * A)  # cast jnp to onp before passing to grb
-        Bk = np.array(h * B)
-        Ck = np.array(-h * (A @ x + B @ ubar - feq))
+        # Ak = np.array(np.eye(n) + h * A)  # cast jnp to onp before passing to grb
+        # Bk = np.array(h * B)
+        # Ck = np.array(-h * (A @ x + B @ ubar - feq))
+        Ak = np.eye(n) + h * A
+        Bk = h * B
+        Ck = -h * (A @ x + B @ ubar - feq)
 
         # constructing dynamics constraints
         x_var = self._gp_xvar

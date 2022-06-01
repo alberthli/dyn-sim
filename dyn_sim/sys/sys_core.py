@@ -7,6 +7,8 @@ from jax import jacobian, jit
 from matplotlib.axes import Axes
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 
+from dyn_sim.util.jax_utils import jax_func
+
 
 class System(ABC):
     """Abstract class for dynamical systems."""
@@ -52,7 +54,8 @@ class System(ABC):
             Time derivative of current state.
         """
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
+    @jax_func
     def A(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Linearized autonomous dynamics about (x, u).
 
@@ -74,7 +77,6 @@ class System(ABC):
         _A = jacobian(dyn_jnp, argnums=0)(x, u)
         return _A
 
-    @property
     @partial(jit, static_argnums=(0,))
     def B(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
         """Linearized control dynamics about (x, u).
