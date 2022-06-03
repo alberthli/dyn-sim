@@ -2,6 +2,7 @@ import sys
 from typing import Union
 
 import gurobipy as gp
+import matplotlib.pyplot as plt
 import numpy as np
 
 sys.path.append("..")
@@ -59,12 +60,12 @@ def x_ref(t: float, x: np.ndarray, slmpc: SLMPC) -> Union[np.ndarray, gp.MVar]:
         State reference at time t.
     """
     _ref = np.zeros(4)
-    # amp = 1
-    # coeff = 0.1
-    # _ref[0] = amp * np.sin(coeff * t)
-    # _ref[2] = coeff * amp * np.cos(coeff * t)
-    _ref[0] = t / 30.0
-    _ref[2] = 1 / 30.0
+    amp = 1
+    coeff = 1
+    _ref[0] = amp * np.sin(coeff * t)
+    _ref[2] = coeff * amp * np.cos(coeff * t)
+    # _ref[0] = t / 30.0
+    # _ref[2] = 1 / 30.0
     return _ref
 
 
@@ -129,6 +130,21 @@ if __name__ == "__main__":
     n_frames = int(10 * sim_length + 1)  # number of frames
     tsim = np.linspace(0, sim_length, n_frames)  # query times
     t_sol, x_sol = simulator.simulate(x0, tsim)
+
+    # summary plot
+    fig = plt.Figure()
+    plt.plot(t_sol, x_sol[0, :], label="MPC Path")
+    ref_vals = np.zeros(x_sol.shape)
+    for i in range(len(t_sol)):
+        ti = t_sol[i]
+        xi = x_sol[:, i]
+        ref_vals[:, i] = x_ref(ti, xi, slmpc)
+    plt.plot(t_sol, ref_vals[0, :], label="Reference Path")
+    plt.title("MPC: Linearization About IC")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Planar Position (m)")
+    plt.legend()
+    plt.show()
 
     # animating the solution
     fps = 20.0  # animation fps
