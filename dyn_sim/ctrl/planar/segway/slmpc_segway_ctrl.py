@@ -24,7 +24,7 @@ class SLMPCSegwayController(SLMPC):
         sys: System,
         wc: Optional[float],
         mpc_N: int,
-        mpc_P: Optional[np.ndarray],
+        mpc_P: np.ndarray,
         mpc_Q: np.ndarray,
         mpc_R: np.ndarray,
         x_ref: Callable[[float, np.ndarray, SLMPC], Union[np.ndarray, gp.MVar]],

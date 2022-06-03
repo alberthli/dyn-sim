@@ -1,9 +1,13 @@
 from abc import ABC, ABCMeta, abstractmethod
 from typing import Optional, Union
 
+import jax.numpy as jnp
 import numpy as np
+from jax import jacobian
 from matplotlib.axes import Axes
 from mpl_toolkits.mplot3d.axes3d import Axes3D
+
+from dyn_sim.util.jax_utils import jax_func
 
 
 class System(ABC):
@@ -31,7 +35,8 @@ class System(ABC):
         self._is3d = is3d
 
     @abstractmethod
-    def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    @jax_func
+    def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> jnp.ndarray:
         """Dynamics of the system.
 
         Parameters
@@ -45,16 +50,18 @@ class System(ABC):
 
         Returns
         -------
-        dx : np.ndarray, shape=(n,)
+        dx : jnp.ndarray, shape=(n,)
             Time derivative of current state.
         """
 
-    @abstractmethod
-    def A(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    @jax_func
+    def A(self, t: float, x: np.ndarray, u: np.ndarray) -> jnp.ndarray:
         """Linearized autonomous dynamics about (x, u).
 
         Parameters
         ----------
+        t : float
+            Time.
         x : np.ndarray, shape=(n,)
             State.
         u : np.ndarray, shape=(m,)
@@ -62,16 +69,21 @@ class System(ABC):
 
         Returns
         -------
-        _A : np.ndarray, shape=(n, n)
+        _A : jnp.ndarray, shape=(n, n)
             Linearized autonomous dynamics about (x, u).
         """
+        dyn_jnp = lambda _x, _u: self.dyn(t, _x, _u, np_out=False)
+        _A = jacobian(dyn_jnp, argnums=0)(x, u)
+        return _A
 
-    @abstractmethod
-    def B(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    @jax_func
+    def B(self, t: float, x: np.ndarray, u: np.ndarray) -> jnp.ndarray:
         """Linearized control dynamics about (x, u).
 
         Parameters
         ----------
+        t : float
+            Time.
         x : np.ndarray, shape=(n,)
             State.
         u : np.ndarray, shape=(m,)
@@ -79,9 +91,12 @@ class System(ABC):
 
         Returns
         -------
-        _B : np.ndarray, shape=(n, m)
+        _B : jnp.ndarray, shape=(n, m)
             Linearized control dynamics about (x, u).
         """
+        dyn_jnp = lambda _x, _u: self.dyn(t, _x, _u, np_out=False)
+        _B = jacobian(dyn_jnp, argnums=1)(x, u)
+        return _B
 
     @abstractmethod
     def draw(self, ax: Optional[Union[Axes, Axes3D]], x: np.ndarray) -> None:
@@ -117,7 +132,8 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
         super(CtrlAffineSystem, self).__init__(n, m, is3d)
 
     @abstractmethod
-    def fdyn(self, t: float, x: np.ndarray) -> np.ndarray:
+    @jax_func
+    def fdyn(self, t: float, x: np.ndarray) -> jnp.ndarray:
         """Drift of the system.
 
         Parameters
@@ -129,12 +145,13 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
 
         Returns
         -------
-        f_val : np.ndarray, shape=(n,)
+        f_val : jnp.ndarray, shape=(n,)
             Value of the drift of the system.
         """
 
     @abstractmethod
-    def gdyn(self, t: float, x: np.ndarray) -> np.ndarray:
+    @jax_func
+    def gdyn(self, t: float, x: np.ndarray) -> jnp.ndarray:
         """Actuation matrix.
 
         Parameters
@@ -146,12 +163,13 @@ class CtrlAffineSystem(System, metaclass=ABCMeta):
 
         Returns
         -------
-        g_val : np.ndarray, shape=(n, m)
+        g_val : jnp.ndarray, shape=(n, m)
             Value of the actuation matrix of the system.
         """
 
-    def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    @jax_func
+    def dyn(self, t: float, x: np.ndarray, u: np.ndarray) -> jnp.ndarray:
         """See parent docstring."""
         assert x.shape == (self._n,)
         assert u.shape == (self._m,)
-        return self.fdyn(t, x) + self.gdyn(t, x) * u
+        return self.fdyn(t, x, np_out=False) + self.gdyn(t, x, np_out=False) @ u

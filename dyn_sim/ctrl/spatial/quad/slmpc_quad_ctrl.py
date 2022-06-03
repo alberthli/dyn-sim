@@ -31,7 +31,7 @@ class SLMPCQuadController(SLMPC):
         sys: System,
         wc: Optional[float],
         mpc_N: int,
-        mpc_P: Optional[np.ndarray],
+        mpc_P: np.ndarray,
         mpc_Q: np.ndarray,
         mpc_R: np.ndarray,
         x_ref: Callable[[float, np.ndarray, SLMPC], Union[np.ndarray, gp.MVar]],
@@ -115,4 +115,4 @@ class SLMPCQuadController(SLMPC):
         for i in range(N):
             ui = u_var[i, :]
             self._gpmodel.addConstr(ui[0] >= 0)  # thrust
-            self._gpmodel.addConstr(self._sys.invV @ ui >= 1e-3)  # rotor speed
+            self._gpmodel.addConstr(self._sys.invV() @ ui >= 1e-3)  # rotor speed

@@ -14,7 +14,7 @@ from dyn_sim.sys.planar.segway import Segway  # noqa: E402
 seg = Segway()
 
 # FDBK LIN CONTROLLER #
-p_star = 0.0  # desired position
+p_star = 1.0  # desired position
 alpha1 = 1.0  # gains for feedback linearization
 alpha2 = 1.0
 flc = FLPosRegSegwayController(seg, p_star, alpha1, alpha2)
@@ -23,7 +23,7 @@ flc = FLPosRegSegwayController(seg, p_star, alpha1, alpha2)
 simulator = SimulationEnvironment(seg, flc)
 
 if __name__ == "__main__":
-    x0 = np.array([1, 0, 0, 0])
+    x0 = np.array([0, 0, 0, 0])
     sim_length = 15.0  # a long horizon here produces a pretty funny animation
     n_frames = int(50 * sim_length + 1)
     horizon = np.linspace(0, sim_length, n_frames)
@@ -31,6 +31,7 @@ if __name__ == "__main__":
 
     # [TODO] fix 2D animations
     # animate
-    # fps = 20.0
-    # lims = ((-2, 2), (-2, 2), (-1, 1))
-    # simulator.animate(t_sol, x_sol, lims, fps=fps)
+    fps = 20.0
+    xlim = (-3, 3)
+    ylim = (0, 3)
+    simulator.animate(t_sol, x_sol, xlim, ylim, fps=fps)

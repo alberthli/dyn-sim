@@ -58,3 +58,9 @@ For people developing on the environment, style-checking and static type-checkin
 pip install pre-commit
 pre-commit install
 ```
+
+## Usage
+The general design flow will follow something like below:
+1. Define a `System` class. This involves writing the initialization code (i.e. parameterizing the system) and then defining the dynamics. When the system is defined, you must use Jax arrays so that the linearized form can be computed using autodifferentiation (see `quad.py` or `segway.py` for examples).
+2. Define a `Controller` class corresponding to the system. For example, see `slmpc_quad_ctrl.py`, which simply defines the desired state/input constraints as well as specifying an input `u_bar` around which to linearize for the linearization-based model predictive controller. This makes heavy use of the comprehensive `SLMPC` abstract class.
+3. Write a script that demonstrates the controller on the system and uses the `Simulator` class. See `ex_slmpc_quad.py` for an example.

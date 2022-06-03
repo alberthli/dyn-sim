@@ -30,7 +30,7 @@ class SLMPC(FullMemoryBWLC):
         sys: System,
         wc: Optional[float],
         mpc_N: int,
-        mpc_P: Optional[np.ndarray],
+        mpc_P: np.ndarray,
         mpc_Q: np.ndarray,
         mpc_R: np.ndarray,
         x_ref: Callable[[float, np.ndarray, "SLMPC"], Union[np.ndarray, gp.MVar]],
@@ -48,8 +48,8 @@ class SLMPC(FullMemoryBWLC):
             The control frequency (Hz). If None, run in non-bandwidth-limited mode.
         mpc_N : int
             The number of subproblem steps.
-        mpc_P : Optional[np.ndarray], shape=(n, n)
-            The terminal state cost weighting matrix. If None, internally computed as the solution to the discrete algebraic Riccati equation.
+        mpc_P : np.ndarray, shape=(n, n)
+            The terminal state cost weighting matrix.
         mpc_Q : np.ndarray, shape=(n, n)
             The stage state cost weighting matrix.
         mpc_R : np.ndarray, shape=(m, m)
@@ -70,7 +70,7 @@ class SLMPC(FullMemoryBWLC):
         if wc is None:
             super(SLMPC, self).__init__(sys, 1, print_t=print_t)  # 1=dummy init
             self._wc = 0.0  # dummy value
-            assert mpc_h is not None
+            assert mpc_h is not None and mpc_h > 0.0
             self._dt = mpc_h
             warnings.warn("MPC running without bandwith limitations!", UserWarning)
         else:
@@ -173,8 +173,8 @@ class SLMPC(FullMemoryBWLC):
 
         # continuous-time linearized dynamics
         ubar = self._compute_ubar(x)
-        A = self._sys.A(x, ubar)
-        B = self._sys.B(x, ubar)
+        A = self._sys.A(t, x, ubar)
+        B = self._sys.B(t, x, ubar)
         feq = self._sys.dyn(t, x, ubar)  # offset for Taylor expansion
 
         # discrete-time linearized dynamics
