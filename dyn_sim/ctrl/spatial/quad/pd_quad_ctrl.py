@@ -189,6 +189,6 @@ class PDQuadController(Controller):
         wsq = self._rebalance(wsq)
 
         # conversion to virtual inputs for simulation
-        i = self._sys.V @ wsq
+        i = self._sys.V() @ wsq
 
         return i

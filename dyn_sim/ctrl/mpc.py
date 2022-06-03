@@ -173,8 +173,8 @@ class SLMPC(FullMemoryBWLC):
 
         # continuous-time linearized dynamics
         ubar = self._compute_ubar(x)
-        A = self._sys.A(x, ubar)
-        B = self._sys.B(x, ubar)
+        A = self._sys.A(t, x, ubar)
+        B = self._sys.B(t, x, ubar)
         feq = self._sys.dyn(t, x, ubar)  # offset for Taylor expansion
 
         # discrete-time linearized dynamics

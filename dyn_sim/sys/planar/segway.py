@@ -1,7 +1,9 @@
+import jax.numpy as jnp
 import numpy as np
 from matplotlib.axes import Axes
 
 from dyn_sim.sys.sys_core import CtrlAffineSystem
+from dyn_sim.util.jax_utils import jax_func
 from dyn_sim.util.sim_utils import draw_circle
 
 # constants
@@ -74,7 +76,8 @@ class Segway(CtrlAffineSystem):
         self._mass = mass
         self._phi0 = phi0
 
-    def fdyn(self, t: float, x: np.ndarray) -> np.ndarray:
+    @jax_func
+    def fdyn(self, t: float, x: np.ndarray) -> jnp.ndarray:
         """Segway autonomous dynamics.
 
         Parameters
@@ -86,7 +89,7 @@ class Segway(CtrlAffineSystem):
 
         Returns
         -------
-        _fdyn : np.ndarray, shape=(4,)
+        _fdyn : jnp.ndarray, shape=(4,)
             Time derivatives of states from autonomous dynamics.
         """
         assert x.shape == (4,)
@@ -101,15 +104,15 @@ class Segway(CtrlAffineSystem):
 
         # states
         _, phi, dp, dphi = x
-        sinphi = np.sin(phi)
-        cosphi = np.cos(phi)
+        sinphi = jnp.sin(phi)
+        cosphi = jnp.cos(phi)
 
         # inverse inertia matrix
         denom = J0 * m0 - L**2 * mass**2 * cosphi**2
-        Dinv = np.array([[J0, -mass * L * cosphi], [-mass * L * cosphi, m0]]) / denom
+        Dinv = jnp.array([[J0, -mass * L * cosphi], [-mass * L * cosphi, m0]]) / denom
 
         # coriolis & gravity matrix
-        H = np.array(
+        H = jnp.array(
             [
                 -mass * L * sinphi * dphi**2 + bt * (dp - R * dphi) / R,
                 -mass * g * L * sinphi + bt * (dp - R * dphi),
@@ -117,10 +120,11 @@ class Segway(CtrlAffineSystem):
         )
 
         DinvH = Dinv @ H
-        _fdyn = np.array([dp, dphi, -DinvH[0], -DinvH[1]])
+        _fdyn = jnp.array([dp, dphi, -DinvH[0], -DinvH[1]])
         return _fdyn
 
-    def gdyn(self, t: float, x: np.ndarray) -> np.ndarray:
+    @jax_func
+    def gdyn(self, t: float, x: np.ndarray) -> jnp.ndarray:
         """Segway control dynamics.
 
         Parameters
@@ -132,7 +136,7 @@ class Segway(CtrlAffineSystem):
 
         Returns
         -------
-        _gdyn : np.ndarray, shape=(4, 1)
+        _gdyn : jnp.ndarray, shape=(4, 1)
             Matrix representing affine control dynamics.
         """
         assert x.shape == (4,)
@@ -148,163 +152,18 @@ class Segway(CtrlAffineSystem):
         # states
         _, phi, _, _ = x
 
-        cosphi = np.cos(phi)
+        cosphi = jnp.cos(phi)
 
         # inverse inertia matrix
         denom = J0 * m0 - L**2 * mass**2 * cosphi**2
-        Dinv = np.array([[J0, -mass * L * cosphi], [-mass * L * cosphi, m0]]) / denom
+        Dinv = jnp.array([[J0, -mass * L * cosphi], [-mass * L * cosphi, m0]]) / denom
 
         # input matrix
-        B = np.array([Km / R, -Km])
+        B = jnp.array([Km / R, -Km])
 
         DinvB = Dinv @ B
-        _gdyn = np.array([[0, 0, DinvB[0], DinvB[1]]]).T
+        _gdyn = jnp.array([[0, 0, DinvB[0], DinvB[1]]]).T
         return _gdyn
-
-    def A(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
-        """Linearized autonomous dynamics about (x, u).
-
-        Parameters
-        ----------
-        x : np.ndarray, shape=(4,)
-            State.
-        u : np.ndarray, shape=(1,)
-            Input of the segway.
-
-        Returns
-        -------
-        _A : np.ndarray, shape=(4, 4)
-            Linearized autonomous dynamics about (x, u).
-        """
-        assert x.shape == (4,)
-        assert u.shape == (1,)
-
-        # unpacking variables
-        m0 = self._m0
-        mass = self._mass
-        L = self._L
-        J0 = self._J0
-        Km = self._Km
-        R = self._R
-        bt = self._bt
-
-        p, phi, dp, dphi = x
-        sphi = np.sin(phi)
-        cphi = np.cos(phi)
-
-        # constructing A
-        _A = np.zeros((self._n, self._n))
-        TERM1 = J0 * m0 - L**2 * mass**2 * cphi**2
-        _A[1, 2] = -(
-            L
-            * mass
-            * (
-                -J0 * cphi * dphi**2
-                - R * bt * sphi * dphi
-                + Km * u * sphi
-                + bt * dp * sphi
-                + L * g * mass * (2 * cphi**2 - 1)
-            )
-        ) / TERM1 - (
-            2
-            * L**2
-            * mass**2
-            * cphi
-            * sphi
-            * (
-                J0 * Km * u
-                - J0 * bt * dp
-                + J0 * R * bt * dphi
-                + L * R * bt * dp * mass * cphi
-                - L**2 * R * g * mass**2 * cphi * sphi
-                + J0 * L * R * dphi**2 * mass * sphi
-                - L * R**2 * bt * dphi * mass * cphi
-                + Km * L * R * mass * u * cphi
-            )
-        ) / (
-            R * TERM1**2
-        )
-        _A[1, 3] = (
-            L
-            * mass
-            * (
-                -L * R * mass * (2 * cphi**2 - 1) * dphi**2
-                + R * bt * sphi * dphi
-                + Km * u * sphi
-                - bt * dp * sphi
-                + R * g * m0 * cphi
-            )
-        ) / (R * TERM1) + (
-            2
-            * L**2
-            * mass**2
-            * cphi
-            * sphi
-            * (
-                Km * R * m0 * u
-                - R**2 * bt * dphi * m0
-                + R * bt * dp * m0
-                + Km * L * mass * u * cphi
-                - L * bt * dp * mass * cphi
-                + L * R * bt * dphi * mass * cphi
-                - L * R * g * mass * m0 * sphi
-                + L**2 * R * dphi**2 * mass**2 * cphi * sphi
-            )
-        ) / (
-            R * TERM1**2
-        )
-        _A[2, 0] = 1
-        _A[2, 2] = -(bt * (J0 - L * R * mass * cphi)) / (R * TERM1)
-        _A[2, 3] = -(bt * (R * m0 - L * mass * cphi)) / (R * TERM1)
-        _A[3, 1] = 1
-        _A[3, 2] = (
-            J0 * bt - L * R * bt * mass * cphi + 2 * J0 * L * dphi * mass * sphi
-        ) / TERM1
-        _A[3, 3] = (
-            -(
-                dphi * np.sin(2 * phi) * L**2 * mass**2
-                + bt * cphi * L * mass
-                - R * bt * m0
-            )
-            / TERM1
-        )
-        return _A
-
-    def B(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
-        """Linearized control dynamics about (x, u).
-
-        Parameters
-        ----------
-        x : np.ndarray, shape=(4,)
-            State.
-        u : np.ndarray, shape=(1,)
-            Input of the quadrotor.
-
-        Returns
-        -------
-        _B : np.ndarray, shape=(4, 1)
-            Linearized control dynamics about (x, u).
-        """
-        assert x.shape == (4,)
-        assert u.shape == (1,)
-
-        # unpacking variables
-        m0 = self._m0
-        mass = self._mass
-        L = self._L
-        J0 = self._J0
-        Km = self._Km
-        R = self._R
-
-        p, phi, dp, dphi = x
-        cphi = np.cos(phi)
-
-        # constructing _B
-        _B = np.zeros((self._n, self._m))
-        denom = R * (J0 * m0 - L**2 * mass**2 * cphi**2)
-        _B[2] = Km * (J0 + L * R * mass * cphi) / denom
-        _B[3] = -Km * (R * m0 + L * mass * cphi) / denom
-        return _B
 
     def draw(self, ax: Axes, x: np.ndarray) -> None:
         """Draws the segway on specified Axes.
