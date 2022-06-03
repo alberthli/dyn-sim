@@ -111,6 +111,11 @@ class Quadrotor(CtrlAffineSystem):
         are converted (in an invertible way) using _V.
 
         u = V @ wsq
+
+        Returns
+        -------
+        _V : jnp.ndarray, shape=(4, 4)
+            See above.
         """
         kf = self._kf
         km = self._km
@@ -132,6 +137,11 @@ class Quadrotor(CtrlAffineSystem):
         """Matrix converting virtual forces/moments to squared rotor speeds.
 
         wsq = invV @ u
+
+        Returns
+        -------
+        _invV : jnp.ndarray, shape=(4, 4)
+            Inverse of V. See above.
         """
         kf = self._kf
         km = self._km
@@ -356,7 +366,7 @@ class Quadrotor(CtrlAffineSystem):
         t: float,
         s: np.ndarray,
         u: np.ndarray,
-        d: np.ndarray = jnp.zeros(6),
+        d: np.ndarray = np.zeros(6),
     ) -> jnp.ndarray:
         """Quadrotor dynamics function.
 
@@ -368,7 +378,7 @@ class Quadrotor(CtrlAffineSystem):
             State of the quadrotor.
         u : np.ndarray, shape=(4,)
             Virtual input of the quadrotor.
-        d : np.ndarray, shape=(6,), default=jnp.zeros(6)
+        d : np.ndarray, shape=(6,), default=np.zeros(6)
             Disturbances to the quadrotor.
 
         Returns
