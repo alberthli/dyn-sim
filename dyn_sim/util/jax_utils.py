@@ -18,6 +18,8 @@ def jax_func(func: TFunc) -> TFunc:
     ----------
     func : TFunc
         The function to be wrapped.
+    obj_method : bool, default=True
+        Flag indicating whether the function is an object method.
 
     Usage
     -----

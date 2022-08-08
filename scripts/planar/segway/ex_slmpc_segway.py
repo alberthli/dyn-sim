@@ -17,7 +17,6 @@ from dyn_sim.sys.planar.segway import Segway  # noqa: E402
 # #### #
 # NOTE #
 # #### #
-# MPC alone is pretty crappy for the segway, but it does compute a solution. Since the system is so unstable, we would ideally want to compute better nominal (x, u) trajectories using either some generation method or iLQR.
 
 # CONSTANTS #
 g = 9.80665  # gravitational acceleration
